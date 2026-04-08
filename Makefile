@@ -20,7 +20,7 @@ release: $(EXE)
 clean:
 	rm -f $(OBJ) $(DEP) $(EXE)
 
-$(EXE): $(OBJ) | dir
+$(EXE): $(OBJ) | $(DIR)
 	$(CC) -o $@ $^ $(LIBS)
 dir:
 	mkdir -p $(DIR)
