@@ -1,11 +1,14 @@
-#include <stdio.h>
-#include "lexer.h"
 #include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "lexer.h"
 
 static struct option opts[] = {
-  {"lex", no_argument, NULL, 0 },
-  {"parse", no_argument, NULL, 1 },
-  {"codegen", no_argument, NULL, 2 },
+    {"lex", no_argument, NULL, 1},
+    {"parse", no_argument, NULL, 2},
+    {"codegen", no_argument, NULL, 3},
+    {0, 0, 0, 0},
 };
 
 typedef enum compiler_option {
@@ -24,34 +27,31 @@ int main(int argc, char* argv[]) {
     if (c == -1) {
       break;
     }
-    
+
     switch (c) {
-      case 0:
+      case 1:
         opt = LEX;
         break;
-      case 1:
+      case 2:
         opt = PARSE;
         break;
-      case 2:
+      case 3:
         opt = CODEGEN;
         break;
       default:
-        fprintf(stderr, "Unknown argument code: %c.\n", c);
-        break;
+        return 1;
     }
   }
-
-  printf("Got argument: %s.\n", opts[opt_index].name);
 
   if (optind >= argc) {
     fprintf(stderr, "Input file path not specified\n");
     return 1;
   }
-
+  printf("Got argument: %s.\n",
+         opt == DEFAULT ? "<none>" : opts[opt_index].name);
   char* path = argv[optind];
   printf("Got input file path: %s\n", path);
   char* res = read_file(path);
   printf("Got file: %s", res);
   return 0;
 }
-
