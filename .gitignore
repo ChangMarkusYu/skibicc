@@ -1,6 +1,8 @@
 compile_commands.json
 *.o
 *.d
+*.i
+*.s
 bin/*
 .clang-format
 
