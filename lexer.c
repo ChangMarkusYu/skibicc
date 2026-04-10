@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include "status.h"
-
 char* read_file(char* p) {
   FILE* f = fopen(p, "r");
   if (!f) {

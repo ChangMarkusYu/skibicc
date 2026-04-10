@@ -41,22 +41,17 @@ static void replace_ext(char* path, const char* ext) {
 // Runs GNU C preprocessor for file specified by `path`. `path` is replaced
 // with the path to the output file after execution finishes.
 static int run_preprocessor(char* path) {
-  char* path_copy = NULL;
-  char* command = NULL;
-
-  path_copy = malloc(strlen(path) + 1);
+  char* path_copy = strdup(path);
   if (!path_copy) {
     exit(1);
   }
-  strcpy(path_copy, path);
-
   replace_ext(path, ".i");
+
   // command: cpp -P path_copy -o out_path
-  command = string_concat(4, "cpp -P ", path_copy, " -o ", path);
+  char* command = string_concat(4, "cpp -P ", path_copy, " -o ", path);
   if (!command) {
     error("run_preprocessor(): failed to allocate command.");
   }
-
   int res = system(command);
   free(command);
   free(path_copy);
@@ -107,10 +102,9 @@ int main(int argc, char* argv[]) {
   printf("Got argument: %s.\n",
          opt == CO_DEFAULT ? "<none>" : opts[opt_index].name);
 
-  char* arg = argv[optind];
-  char* path = malloc(strlen(arg) + 1);
+  char* path = strdup(argv[optind]);
   if (!path) {
-    error("main(): failed to allocate path");
+    error("main(): failed to dup path");
   }
   strcpy(path, argv[optind]);
   printf("Got input file path: %s\n", path);
