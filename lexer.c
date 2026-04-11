@@ -113,12 +113,12 @@ static uint64_t lex_integer(const char* s, int (*fdigit)(int)) {
 }
 
 uint64_t lex_constant(const char* s) {
-  if (strncmp(s, "0x", 2) == 0 || strncmp(s, "0X", 2) == 0) {
-    s += 2;
-    uint64_t res = lex_integer(s, ishexdigit);
-    return res ? res + 2 : 0;
-  }
-  if (*s == '0') {
+  if (s[0] == '0') {
+    if (tolower(s[1]) == 'x') {
+      s += 2;
+      uint64_t res = lex_integer(s, ishexdigit);
+      return res ? res + 2 : 0;
+    }
     return lex_integer(s, isoctdigit);
   }
   return lex_integer(s, isdigit);

@@ -83,3 +83,4 @@ clean:
 .PHONY: test
 
 .PRECIOUS: $(TEST)$(PFX)%.$(EXT)
+.PRECIOUS: $(TEST)%.o
