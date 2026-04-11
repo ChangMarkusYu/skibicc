@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-#include <unity.h>
+
+#include "../strings.h"
+#include "../unity/unity.h"
 
 void setUp(void) {}
 
