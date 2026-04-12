@@ -20,3 +20,8 @@ bool is_keyword(const char* s, size_t len);
 // `s`. Returns 0 if it is not a constant.
 // Only decimal, octal and hexadecimal integers are supported for now.
 uint64_t lex_constant(const char* s);
+
+// Returns the length of the punctuator starting at the character pointed to by
+// `s`. Returns 0 if it is not a punctuator.
+// Digraphs and trigrpans are not supported.
+uint64_t lex_punctuator(const char* s);

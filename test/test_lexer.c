@@ -189,6 +189,30 @@ void test_lex_keyword(void) {
   TEST_ASSERT_FALSE(is_keyword("123456", 6));
 }
 
+void test_lex_punctuator(void) {
+  char* punctuators[] = {
+      "[",  "]",  "(",  ")",  "{",   "}",   ".",  "->", "++", "--",  "&",  "*",
+      "+",  "-",  "~",  "!",  "/",   "%",   "<<", ">>", "<",  ">",   "<=", ">=",
+      "==", "!=", "^",  "|",  "&&",  "||",  "?",  ":",  ";",  "...", "=",  "*=",
+      "/=", "%=", "+=", "-=", "<<=", ">>=", "&=", "^=", "|=", ",",   "#",  "##",
+  };
+  for (size_t i = 0; i < sizeof(punctuators) / sizeof(punctuators[0]); ++i) {
+    const char* punct = punctuators[i];
+    TEST_ASSERT_EQUAL(strlen(punct), lex_punctuator(punct));
+  }
+  TEST_ASSERT_EQUAL(3, "<<=;");
+  TEST_ASSERT_EQUAL(1, "{this does not count}");
+  TEST_ASSERT_EQUAL(1, "[123456]");
+  TEST_ASSERT_EQUAL(2, "||0||1");
+  TEST_ASSERT_EQUAL(2, "<=x=>");
+  TEST_ASSERT_EQUAL(1, "+2-3/5&6%7");
+  TEST_ASSERT_EQUAL(1, "(+2-3)/(5&6)%7");
+
+  TEST_ASSERT_EQUAL(0, "123456");
+  TEST_ASSERT_EQUAL(0, "foobar");
+  TEST_ASSERT_EQUAL(0, "x;(12+34)");
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_lex_identifier);

@@ -155,3 +155,23 @@ uint64_t lex_constant(const char* s) {
   }
   return lex_integer(s, isdigit);
 }
+
+static char* PUNCTUATORS[] = {
+    "[",  "]",  "(",  ")",  "{",   "}",   ".",  "->", "++", "--",  "&",  "*",
+    "+",  "-",  "~",  "!",  "/",   "%",   "<<", ">>", "<",  ">",   "<=", ">=",
+    "==", "!=", "^",  "|",  "&&",  "||",  "?",  ":",  ";",  "...", "=",  "*=",
+    "/=", "%=", "+=", "-=", "<<=", ">>=", "&=", "^=", "|=", ",",   "#",  "##",
+};
+
+const size_t PUNCTUATORS_SIZE = sizeof(PUNCTUATORS) / sizeof(PUNCTUATORS[0]);
+
+uint64_t lex_punctuator(const char* s) {
+  for (size_t i = 0; i < PUNCTUATORS_SIZE; ++i) {
+    const char* punct = PUNCTUATORS[i];
+    size_t len = strlen(punct);
+    if (strncmp(s, punct, len) == 0) {
+      return len;
+    }
+  }
+  return 0;
+}
