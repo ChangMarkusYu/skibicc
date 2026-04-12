@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "../lexer.h"
 #include "../unity/unity.h"
 #include "unity_internals.h"
@@ -158,11 +160,41 @@ void test_lex_constant_hexadecial(void) {
   TEST_ASSERT_EQUAL(8, lex_constant("0x237LLU;thisdoesnotcount"));
 }
 
+void test_lex_keyword(void) {
+  char* keywords[] = {
+      "auto",     "if",       "unsigned",
+      "break",    "inline",   "void",
+      "case",     "int",      "volatile",
+      "char",     "long",     "while",
+      "const",    "register", "_Alignas",
+      "continue", "restrict", "_Alignof",
+      "default",  "return",   "_Atomic",
+      "do",       "short",    "_Bool",
+      "double",   "signed",   "_Complex",
+      "else",     "sizeof",   "_Generic",
+      "enum",     "static",   "_Imaginary",
+      "extern",   "struct",   "_Noreturn",
+      "float",    "switch",   "_Static_assert",
+      "for",      "typedef",  "_Thread_local",
+      "goto",     "union",
+  };
+
+  for (size_t i = 0; i < sizeof(keywords) / sizeof(keywords[0]); ++i) {
+    const char* word = keywords[i];
+    TEST_ASSERT_TRUE(is_keyword(word, strlen(word)));
+  }
+  TEST_ASSERT_TRUE(is_keyword("break;", 5));
+  TEST_ASSERT_FALSE(is_keyword("breakit;", 7));
+  TEST_ASSERT_FALSE(is_keyword("foobar", 5));
+  TEST_ASSERT_FALSE(is_keyword("123456", 6));
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_lex_identifier);
   RUN_TEST(test_lex_constant_decimal);
   RUN_TEST(test_lex_constant_octal);
   RUN_TEST(test_lex_constant_hexadecial);
+  RUN_TEST(test_lex_keyword);
   return UNITY_END();
 }

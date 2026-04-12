@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,7 +36,7 @@ char* read_file(char* path) {
 }
 
 // Returns true if `c` matches [a-zA-Z_]. Otherwise returns false.
-static inline bool is_word_char(char c) { return isalnum(c) || c == '_'; }
+static inline bool iswordchar(char c) { return isalnum(c) || c == '_'; }
 
 uint64_t lex_identifier(const char* s) {
   if (!isalpha(s[0]) && s[0] != '_') {
@@ -46,12 +47,42 @@ uint64_t lex_identifier(const char* s) {
   ++s;
   while (true) {
     char c = *s;
-    if (!is_word_char(c)) {
+    if (!iswordchar(c)) {
       break;
     }
     ++s;
   }
   return s - start;
+}
+
+static char* KEYWORDS[] = {
+    "auto",     "if",       "unsigned",
+    "break",    "inline",   "void",
+    "case",     "int",      "volatile",
+    "char",     "long",     "while",
+    "const",    "register", "_Alignas",
+    "continue", "restrict", "_Alignof",
+    "default",  "return",   "_Atomic",
+    "do",       "short",    "_Bool",
+    "double",   "signed",   "_Complex",
+    "else",     "sizeof",   "_Generic",
+    "enum",     "static",   "_Imaginary",
+    "extern",   "struct",   "_Noreturn",
+    "float",    "switch",   "_Static_assert",
+    "for",      "typedef",  "_Thread_local",
+    "goto",     "union",
+};
+
+static const size_t KEYWORDS_SIZE = sizeof(KEYWORDS) / sizeof(KEYWORDS[0]);
+
+// TODO: implement a hash map for fast lookup.
+bool is_keyword(const char* s, size_t len) {
+  for (size_t i = 0; i < KEYWORDS_SIZE; ++i) {
+    if (strncmp(s, KEYWORDS[i], len) == 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Returns 1 if `c` matches [0-8], otherwise returns 0.
@@ -63,13 +94,14 @@ static int ishexdigit(int c) {
 }
 
 // u or U; l or L; ll or LL; Both u or U and l or L; Both u or U and ll or LL.
-// 6 + (2 * 2 + 2 * 2) * 2 = 22
-#define INT_SUFFIX_SIZE 22
 // Longest first so that we match them first.
-static char* INT_SUFFIX[INT_SUFFIX_SIZE] = {
+static char* INT_SUFFIXES[] = {
     "uLL", "ull", "ULL", "Ull", "LLu", "llu", "LLU", "llU", "ul", "uL", "Ul",
     "UL",  "lu",  "Lu",  "lU",  "LU",  "ll",  "LL",  "u",   "U",  "l",  "L",
 };
+
+static const size_t INT_SUFFIXES_SIZE =
+    sizeof(INT_SUFFIXES) / sizeof(INT_SUFFIXES[0]);
 
 // If `s` matches any integer suffixes, returns `s` after skipping the suffix.
 // Otherwise returns `s` as-is.
@@ -79,8 +111,8 @@ static const char* consume_int_suffix(const char* s) {
     // Fast path.
     return s;
   }
-  for (size_t i = 0; i < INT_SUFFIX_SIZE; ++i) {
-    char* suffix = INT_SUFFIX[i];
+  for (size_t i = 0; i < INT_SUFFIXES_SIZE; ++i) {
+    char* suffix = INT_SUFFIXES[i];
     size_t len = strlen(suffix);
     if (strncmp(suffix, s, len) == 0) {
       s += len;
@@ -106,7 +138,7 @@ static uint64_t lex_integer(const char* s, int (*fdigit)(int)) {
   }
   s = consume_int_suffix(s);
   // Integer must end at word boundary.
-  if (is_word_char(*s)) {
+  if (iswordchar(*s)) {
     return 0;
   }
   return s - start;

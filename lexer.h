@@ -1,3 +1,5 @@
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 // Reads a file from `path` and returns its content.
@@ -8,6 +10,11 @@ char* read_file(char* path);
 // An identifier is defined as the following (PCRE syntax):
 // [a-zA-Z_]\w*\b
 uint64_t lex_identifier(const char* s);
+
+// Returns true if the string starting at `s` of length `len` is a keyword.
+// Otherwise returns false. It is assumed that `s` must be an identifier, i.e.,
+// lex_identifier(s) > 0.
+bool is_keyword(const char* s, size_t len);
 
 // Returns the length of the constant starting at the character pointed to by
 // `s`. Returns 0 if it is not a constant.
