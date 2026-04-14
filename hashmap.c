@@ -1,10 +1,11 @@
+#include "hashmap.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "errors.h"
 
 // Fixed seed to deterministic test results.
 const uint64_t SEED = 0x123456;
@@ -12,19 +13,6 @@ const uint64_t SEED = 0x123456;
 const size_t INITIAL_SIZE = 256;
 // A bit lower than the optimal 0.7 to be conservative.
 const double LOAD_FACTOR = 0.6;
-
-typedef struct hashmap_entry {
-  void* key;
-  size_t key_size;
-  void* data;
-  size_t data_size;
-} hashmap_entry;
-
-typedef struct hashmap {
-  hashmap_entry* arr;
-  size_t size;
-  size_t capacity;
-} hashmap;
 
 // FNV hash
 // `key` is the key to be hashed. `key_size` is the size of `key` in bytes. `h`
@@ -42,8 +30,8 @@ static uint32_t FNV(const void* key, size_t key_size, uint32_t h) {
 
 // Returns true if `lhs` and `rhs` have the same key. Otherwise returns false.
 static bool compare_key(const hashmap_entry* lhs, const hashmap_entry* rhs) {
-  return strncmp(lhs->key, rhs->key, rhs->key_size) == 0 &&
-         lhs->key_size == rhs->key_size;
+  return lhs->key_size == rhs->key_size &&
+         strncmp(lhs->key, rhs->key, rhs->key_size) == 0;
 }
 
 // Inserts `entry` into `map`, performing linear probing in case of hash
@@ -56,24 +44,17 @@ static bool maybe_probe_and_insert(hashmap* map, const hashmap_entry* entry) {
   // Credit: https://stackoverflow.com/questions/70089037
   size_t index = hash & (map->capacity - 1);
   hashmap_entry* arr_entry = &map->arr[index];
-  if (arr_entry->data) {
+  if (arr_entry->key) {
     if (compare_key(arr_entry, entry)) {
       // Key already inserted.
       return false;
     }
-    size_t i = 1;
-    // Hash collision. Do linear probing.
-    for (; i < map->capacity; ++i) {
-      // Equivalent to index_r = (index + i) % map->capacity
-      size_t index_r = (index + i) & (map->capacity - 1);
-      if (!map->arr[index_r].data) {
-        arr_entry = &map->arr[index_r];
+    while (true) {
+      index = (index + 1) & (map->capacity - 1);
+      if (!map->arr[index].key) {
+        arr_entry = &map->arr[index];
         break;
       }
-    }
-    if (i >= map->capacity) {
-      // Not supposed to happen.
-      error("FATAL: linear probing failed to find a slot!");
     }
   }
   *arr_entry = *entry;
@@ -97,6 +78,7 @@ static void rehash(hashmap* map) {
     }
     maybe_probe_and_insert(map, &arr[i]);
   }
+  free(arr);
 }
 
 void hashmap_init(hashmap* map) {
@@ -115,7 +97,17 @@ bool hashmap_insert(hashmap* map, const hashmap_entry* entry) {
 hashmap_entry* hashmap_get(hashmap* map, void* key, size_t key_size) {
   uint32_t hash = FNV(key, key_size, SEED);
   size_t index = hash & (map->capacity - 1);
-  return &map->arr[index];
+  hashmap_entry* res = &map->arr[index];
+  hashmap_entry needle = {
+      .key = key,
+      .key_size = key_size,
+  };
+  while (res->key && !compare_key(res, &needle)) {
+    // Probe linearly when we have a hash collision.
+    index = (index + 1) & (map->capacity - 1);
+    res = &map->arr[index];
+  }
+  return res;
 }
 
 void hashmap_destroy(hashmap* map) {
@@ -123,5 +115,4 @@ void hashmap_destroy(hashmap* map) {
     free(map->arr[i].key);
     free(map->arr[i].data);
   }
-  free(map);
 }

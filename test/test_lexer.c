@@ -2,7 +2,6 @@
 
 #include "../lexer.h"
 #include "../unity/unity.h"
-#include "unity_internals.h"
 
 void setUp(void) {}
 
