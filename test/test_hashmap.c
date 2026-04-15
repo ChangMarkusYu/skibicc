@@ -56,6 +56,7 @@ void test_hashmap_stress(void) {
     exit(1);
   }
 
+  // Test insertion.
   char* line = NULL;
   ssize_t read;
   size_t len;
@@ -74,6 +75,7 @@ void test_hashmap_stress(void) {
     line = NULL;
   }
 
+  // Test get.
   line = NULL;
   rewind(fp);
   while ((read = getline(&line, &len, fp)) != -1) {
@@ -87,6 +89,32 @@ void test_hashmap_stress(void) {
     line = NULL;
   }
 
+  // Test remove.
+  line = NULL;
+  rewind(fp);
+  size_t i = 0;
+  // words.txt has >400K lines. Remove the first 400K from the hashmap.
+  size_t remove_threshold = 400000;
+  while ((read = getline(&line, &len, fp)) != -1) {
+    if (i < remove_threshold) {
+      hashmap_entry entry = hashmap_remove(&map, line, read);
+      TEST_ASSERT_EQUAL_STRING(line, entry.key);
+      TEST_ASSERT_EQUAL(read, entry.key_size);
+      TEST_ASSERT_TRUE(*(bool*)entry.data);
+      TEST_ASSERT_EQUAL(sizeof(bool), entry.data_size);
+      free(entry.key);
+      free(entry.data);
+    } else {
+      hashmap_entry* entry = hashmap_get(&map, line, read);
+      TEST_ASSERT_TRUE(entry);
+      TEST_ASSERT_EQUAL_STRING(line, entry->key);
+      TEST_ASSERT_EQUAL(read, entry->key_size);
+      TEST_ASSERT_TRUE(*(bool*)entry->data);
+      TEST_ASSERT_EQUAL(sizeof(bool), entry->data_size);
+    }
+    free(line);
+    line = NULL;
+  }
   hashmap_destroy(&map);
   fclose(fp);
 }

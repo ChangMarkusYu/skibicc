@@ -51,6 +51,7 @@ static bool maybe_probe_and_insert(hashmap* map, const hashmap_entry* entry) {
       // Key already inserted.
       return false;
     }
+    // Hash collision. Do linear probing.
     while (true) {
       index = (index + 1) & (map->capacity - 1);
       if (!map->arr[index].key) {
