@@ -36,7 +36,7 @@ char* read_file(char* path) {
 }
 
 // Returns true if `c` matches [a-zA-Z_]. Otherwise returns false.
-static inline bool iswordchar(char c) { return isalnum(c) || c == '_'; }
+static bool iswordchar(char c) { return isalnum(c) || c == '_'; }
 
 uint64_t lex_identifier(const char* s) {
   if (!isalpha(s[0]) && s[0] != '_') {
