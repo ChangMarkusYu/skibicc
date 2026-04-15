@@ -24,13 +24,31 @@ void test_hashmap_simple(void) {
 
   TEST_ASSERT_TRUE(hashmap_insert(&map, &entry));
   hashmap_entry* res = hashmap_get(&map, key, sizeof(key));
+  TEST_ASSERT_TRUE(res);
   TEST_ASSERT_EQUAL_STRING(key, res->key);
   TEST_ASSERT_EQUAL(sizeof(key), res->key_size);
   TEST_ASSERT_EQUAL_STRING(data, res->data);
   TEST_ASSERT_EQUAL(sizeof(data), res->data_size);
+
+  res = hashmap_get(&map, "foobar", 7);
+  TEST_ASSERT_FALSE(res);
+
+  entry = hashmap_remove(&map, "foo", 4);
+  TEST_ASSERT_EQUAL_STRING("foo", entry.key);
+  TEST_ASSERT_EQUAL(4, entry.key_size);
+  TEST_ASSERT_EQUAL_STRING("bar", entry.data);
+  TEST_ASSERT_EQUAL(4, entry.data_size);
+  res = hashmap_get(&map, "foo", 4);
+  TEST_ASSERT_FALSE(res);
+
+  entry = hashmap_remove(&map, "foo", 4);
+  TEST_ASSERT_EQUAL(0, entry.key);
+  TEST_ASSERT_EQUAL(0, entry.key_size);
+  TEST_ASSERT_EQUAL(0, entry.data);
+  TEST_ASSERT_EQUAL(0, entry.data_size);
 }
 
-void test_hashmap_insert_and_get(void) {
+void test_hashmap_stress(void) {
   // Test data courtesy of:
   // https://github.com/dwyl/english-words/blob/master/words.txt
   FILE* fp = fopen("./test/data/words.txt", "r");
@@ -76,6 +94,6 @@ void test_hashmap_insert_and_get(void) {
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_hashmap_simple);
-  RUN_TEST(test_hashmap_insert_and_get);
+  RUN_TEST(test_hashmap_stress);
   return UNITY_END();
 }

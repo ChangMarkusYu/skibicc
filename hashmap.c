@@ -17,10 +17,10 @@ const size_t INITIAL_SIZE = 256;
 const double LOAD_FACTOR = 0.6;
 
 // FNV hash
-// `key` is the key to be hashed. `key_size` is the size of `key` in bytes. `h`
-// is the seed.
+// `key` is the key to be hashed. `key_size` is the size of `key` in bytes.
 // Credit: https://github.com/aappleby/smhasher/blob/master/src/Hashes.cpp
-static uint32_t FNV(const void* key, size_t key_size, uint32_t h) {
+static uint32_t FNV(const void* key, size_t key_size) {
+  uint32_t h = SEED;
   h ^= 2166136261UL;
   const uint8_t* data = (const uint8_t*)key;
   for (size_t i = 0; i < key_size; ++i) {
@@ -31,7 +31,8 @@ static uint32_t FNV(const void* key, size_t key_size, uint32_t h) {
 }
 
 // Returns true if `lhs` and `rhs` have the same key. Otherwise returns false.
-static bool compare_key(const hashmap_entry* lhs, const hashmap_entry* rhs) {
+static inline bool is_key_equal(const hashmap_entry* lhs,
+                                const hashmap_entry* rhs) {
   return lhs->key_size == rhs->key_size &&
          strncmp(lhs->key, rhs->key, rhs->key_size) == 0;
 }
@@ -41,13 +42,12 @@ static bool compare_key(const hashmap_entry* lhs, const hashmap_entry* rhs) {
 // `entry`'s key is already present in `map`) returns false. It is assumed that
 // `map` has enough capacity and its load factor is below the rehash threshold.
 static bool maybe_probe_and_insert(hashmap* map, const hashmap_entry* entry) {
-  uint32_t hash = FNV(entry->key, entry->key_size, SEED);
   // Equivalent to hash % (map->capacity) if map->capacity is a power of 2.
   // Credit: https://stackoverflow.com/questions/70089037
-  size_t index = hash & (map->capacity - 1);
+  size_t index = FNV(entry->key, entry->key_size) & (map->capacity - 1);
   hashmap_entry* arr_entry = &map->arr[index];
   if (arr_entry->key) {
-    if (compare_key(arr_entry, entry)) {
+    if (is_key_equal(arr_entry, entry)) {
       // Key already inserted.
       return false;
     }
@@ -102,17 +102,44 @@ bool hashmap_insert(hashmap* map, const hashmap_entry* entry) {
 }
 
 hashmap_entry* hashmap_get(hashmap* map, void* key, size_t key_size) {
-  uint32_t hash = FNV(key, key_size, SEED);
-  size_t index = hash & (map->capacity - 1);
+  size_t index = FNV(key, key_size) & (map->capacity - 1);
   hashmap_entry* res = &map->arr[index];
   hashmap_entry needle = {
       .key = key,
       .key_size = key_size,
   };
-  while (res->key && !compare_key(res, &needle)) {
+  while (res->key && !is_key_equal(res, &needle)) {
     // Probe linearly when we have a hash collision.
     index = (index + 1) & (map->capacity - 1);
     res = &map->arr[index];
+  }
+  return res->key ? res : NULL;
+}
+
+hashmap_entry hashmap_remove(hashmap* map, void* key, size_t key_size) {
+  hashmap_entry* entry = hashmap_get(map, key, key_size);
+  hashmap_entry res;
+  memset(&res, 0, sizeof(hashmap_entry));
+  if (!entry) {
+    return res;
+  }
+  // Remove the entry. This creates an empty slot.
+  memcpy(&res, entry, sizeof(hashmap_entry));
+  memset(entry, 0, sizeof(hashmap_entry));
+
+  size_t index = entry - map->arr;
+  hashmap_entry* cur = entry + 1;
+  // Move entry whose index (i.e., hash % capacity) is earlier than or equal to
+  // the empty slot into the empty slot.
+  // See: https://en.wikipedia.org/wiki/Linear_probing#Deletion
+  while (cur->key) {
+    if ((FNV(cur->key, cur->key_size) & (map->capacity - 1)) <= index) {
+      *entry = *cur;
+      memset(cur, 0, sizeof(hashmap_entry));
+      entry = cur;
+      index = entry - map->arr;
+    }
+    ++cur;
   }
   return res;
 }
