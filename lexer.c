@@ -101,12 +101,6 @@ static int ishexdigit(int c) {
   return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-// Returns true if `s1` starts with `s2`, otherwise returns false. `n` is the
-// length of `s2`.
-static bool startswith(const char* s1, const char* s2, size_t n) {
-  return strncmp(s1, s2, n) == 0;
-}
-
 // u or U; l or L; ll or LL; Both u or U and l or L; Both u or U and ll or LL.
 // Longest first so that we match them first.
 static char* INT_SUFFIXES[] = {
@@ -128,7 +122,7 @@ static const char* consume_int_suffix(const char* s) {
   for (size_t i = 0; i < INT_SUFFIXES_SIZE; ++i) {
     char* suffix = INT_SUFFIXES[i];
     size_t len = strlen(suffix);
-    if (startswith(s, suffix, len)) {
+    if (strncmp(suffix, s, len) == 0) {
       return s + len;
     }
   }
@@ -188,7 +182,7 @@ uint64_t lex_punctuator(const char* s) {
   for (size_t i = 0; i < PUNCTUATORS_SIZE; ++i) {
     const char* punct = PUNCTUATORS[i];
     size_t len = strlen(punct);
-    if (startswith(s, punct, len)) {
+    if (strncmp(s, punct, len) == 0) {
       return len;
     }
   }
