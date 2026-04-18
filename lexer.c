@@ -212,23 +212,13 @@ static const char* consume_hex(const char* s) {
 // Returns 1 if `c` matches [0-8], otherwise returns 0.
 static int is_oct_digit(int c) { return c >= '0' && c <= '8'; }
 
-// If `s` matches an octal number, returns `s` after skipping the octal number.
-// Otherwise (i.e., `s` contains an invalid suffix) returns NULL. It is assumed
-// that s[0] is a valid octal digit.
-static const char* consume_oct(const char* s) {
-  while (is_oct_digit(*s)) {
-    ++s;
-  }
-  s = consume_int_suffix(s);
-  return s;
-}
-
 // Returns true if `c` is the character 'e' or 'E'. Otherwise returns false.
 static bool is_dec_exp_char(char c) { return tolower(c) == 'e'; }
 
-// If `s` matches a decimal integer or float, returns `s` after skipping the
-// decimal number. Returns NULL if `s` is not a valid decimal number.
-static const char* consume_dec(const char* s) {
+// If `s` matches a decimal integer, a decimal float or an octal integer,
+// returns `s` after skipping the number. Returns NULL if `s` is not a valid
+// number.
+static const char* consume_dec_or_oct(const char* s) {
   if (!isdigit(*s) && *s != '.') {
     return NULL;
   }
@@ -236,11 +226,17 @@ static const char* consume_dec(const char* s) {
     return NULL;
   }
 
+  const char* start = s;
+  bool has_invalid_oct = false;
   while (isdigit(*s)) {
+    has_invalid_oct |= !is_oct_digit(*s);
     ++s;
   }
   if (*s != '.' && !is_dec_exp_char(*s)) {
-    // Integer
+    // Decimal or octal integer
+    if (*start == '0' && has_invalid_oct) {
+      return NULL;
+    }
     return consume_int_suffix(s);
   }
   // Float
@@ -261,10 +257,8 @@ uint64_t lex_numeric_constant(const char* s) {
   const char* start = s;
   if (s[0] == '0' && tolower(s[1]) == 'x') {
     s = consume_hex(s + 2);
-  } else if (s[0] == '0') {
-    s = consume_oct(s);
   } else {
-    s = consume_dec(s);
+    s = consume_dec_or_oct(s);
   }
   return s ? s - start : 0;
 }
