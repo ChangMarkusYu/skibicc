@@ -355,7 +355,7 @@ static const char* consume_hex_escape_sequence(const char* s, size_t max_len) {
 //! `NULL` or `s` advanced by at least 1 character.
 //!
 //! Some details on escape sequences:
-//! '\t', '\n', etc are legitimate escape sequences. We skip 1 character. We
+//! '\t', '\v', etc are legitimate escape sequences. We skip 1 character. We
 //! return `s` + 1.
 //! '\0', '\123', etc are legitimate octal escape sequences. We skip all digits.
 //! Sequences like '\y', '\o', '\z', ... does not contain supported escape
