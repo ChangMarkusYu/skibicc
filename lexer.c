@@ -303,8 +303,8 @@ uint64_t lex_punctuator(const char* s) {
 //! Returns true if `c` is a character literal prefix. Otherwise returns false.
 static bool is_char_prefix(char c) { return c == 'L' || tolower(c) == 'u'; }
 
-// Given a character literal prefix, returns its allowed maximum number of hex
-// digits.
+//! Given a character literal prefix, returns its allowed maximum number of hex
+//! digits.
 static size_t get_char_max_hex_len(char c) {
   switch (c) {
     case 'u':
@@ -355,21 +355,25 @@ static const char* consume_hex_escape_sequence(const char* s, size_t max_len) {
 //! `NULL` or `s` advanced by at least 1 character.
 //!
 //! Some details on escape sequences:
-//! '\t', '\v', etc are legitimate escape sequences. We skip 1 character. We
+//! - '\t', '\v', etc are legitimate escape sequences. We skip 1 character. We
 //! return `s` + 1.
-//! '\0', '\123', etc are legitimate octal escape sequences. We skip all digits.
-//! Sequences like '\y', '\o', '\z', ... does not contain supported escape
-//! characters, but we still treat them as if they are escape characters. We
-//! skip 1 character and return `s` + 1.
-//! Sequences like '\1234', '\0000', '\129',... have a prefix that is valid
+//!
+//! - '\0', '\123', etc are legitimate octal escape sequences. We skip all
+//! digits. Sequences like '\y', '\o', '\z', ... does not contain supported
+//! escape characters, but we still treat them as if they are escape characters.
+//! We skip 1 character and return `s` + 1.
+//!
+//! - Sequences like '\1234', '\0000', '\129',... have a prefix that is valid
 //! octal escape sequence. We will skip that sequence, and the remaining digits
 //! or characters will be treated as normal characters.
-//! If `max_hex_len` is set 2, sequences like '\x', '\xabc' are invalid hex
+//!
+//! - If `max_hex_len` is set 2, sequences like '\x', '\xabc' are invalid hex
 //! escape sequences (they must contain at least 1 and at most 2 hex digits
 //! after 'x'), we return `NULL`.
-//! Sequences like '\xzz', '\xy' contains non-hex characters, we treat this as
-//! seeing a '\x', which is an unsupported escape sequence, so we return `s`
-//! + 1. The remaining characters are treated as normal characters.
+//!
+//! - Sequences like '\xzz', '\xy' contains non-hex characters, we treat this as
+//! seeing a '\x', which is an unsupported escape sequence, so we return
+//! `s` + 1. The remaining characters are treated as normal characters.
 static const char* consume_escape_sequence(const char* s, size_t max_hex_len) {
   if (is_escape_char(*s)) {
     ++s;
