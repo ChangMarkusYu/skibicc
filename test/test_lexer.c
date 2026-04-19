@@ -326,7 +326,7 @@ void test_lex_punctuator(void) {
   TEST_ASSERT_EQUAL(0, lex_punctuator("x;(12+34)"));
 }
 
-void test_char_literal(void) {
+void test_char_constant(void) {
   // 'a'
   TEST_ASSERT_EQUAL(3, lex_char_constant("'a'"));
   // '\a'
@@ -370,7 +370,7 @@ int main(void) {
   RUN_TEST(test_lex_hex_float);
   RUN_TEST(test_lex_keyword);
   RUN_TEST(test_lex_punctuator);
-  RUN_TEST(test_char_literal);
+  RUN_TEST(test_char_constant);
   RUN_TEST(test_string_literal);
   return UNITY_END();
 }

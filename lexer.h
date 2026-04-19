@@ -27,7 +27,7 @@ uint64_t lex_numeric_constant(const char* s);
 uint64_t lex_punctuator(const char* s);
 
 //! Returns the length of the character constant starting at the character
-//! pointed to by `s`. Returns 0 if it is not a constant.
+//! pointed to by `s`. Returns 0 if it is not a character constant.
 //!
 //! Some notes on the form of character literal:
 //! If preceded by 'L, 'u' or 'U', it is a wide char and can only have 1
@@ -38,6 +38,10 @@ uint64_t lex_punctuator(const char* s);
 //! the slash, so for example given '\o', it is translated into 'o'.
 uint64_t lex_char_constant(const char* s);
 
+//! Returns the length of the string literal starting at the character pointed
+//! to by `s`. Returns 0 if it is not a string literal.
+//! Unsupported escape sequences will get translated into the character after
+//! the slash, so for example given '\o', it is translated into 'o'.
 uint64_t lex_string_literal(const char* s);
 
 #endif  // SKIBICC_LEXER_H
