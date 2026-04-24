@@ -338,10 +338,18 @@ bool lex_punctuator(const char* s, token* tok) {
   return false;
 }
 
+//! Enum whose integer value denotes character width. Each width corresponds to
+//! an unicode encoding.
+//! - 1 byte width: UTF-8
+//! - 2 byte width: UTF-16
+//! - 4 byte width: UTF-32
 typedef enum char_width {
-  CW_1 = 1,
-  CW_2 = 2,
-  CW_4 = 4,
+  //! 1 byte wide character. UTF-8.
+  CW_UTF8 = 1,
+  //! 2 byte wide character. UTF-16.
+  CW_UTF16 = 2,
+  //! 4 byte wide character. UTF-32.
+  CW_UTF32 = 4,
 } char_width;
 
 //! If `s` matches a hex escape sequence (characters after the "\x" prefix),
@@ -388,7 +396,7 @@ static const char* consume_oct_escape_sequence(const char* s, uint32_t* dst,
     ++len;
   }
   // 1 byte holds at most an integer value of 255.
-  if (char_width == CW_1 && c > '\377') {
+  if (char_width == CW_UTF8 && c > '\377') {
     error("error: octal escape sequence out of range.");
   }
   *dst = c;
@@ -458,6 +466,8 @@ static const char* consume_escape_sequence(const char* s, uint32_t* dst,
   if (is_oct_digit(*s)) {
     return consume_oct_escape_sequence(s, dst, char_width);
   }
+  // No additional encoding is required because all escape characters are ASCII.
+  // UTF-8, UTF-16, and UTF-32 are ASCII compatible.
   *dst = get_escape_char(*s);
   return s + 1;
 }
@@ -478,9 +488,9 @@ static const char* consume_wide_char_body(const char* s, uint32_t* dst) {
 
   // Prefix u: 2 byte character. Prefix U or L: 4 byte character.
   char prefix = s[0];
-  char_width char_width = CW_2;
+  char_width char_width = CW_UTF16;
   if (prefix == 'U' || prefix == 'L') {
-    char_width = CW_4;
+    char_width = CW_UTF32;
   }
   s += 2;
 
@@ -527,7 +537,7 @@ static const char* consume_char_body(const char* s, uint32_t* dst) {
     }
     if (*s == '\\') {
       ++s;
-      ASSIGN_OR_RETURN(s, consume_escape_sequence(s, dst, CW_1));
+      ASSIGN_OR_RETURN(s, consume_escape_sequence(s, dst, CW_UTF8));
       continue;
     }
     // TODO: need a UTF-8 decode method.
@@ -561,13 +571,13 @@ bool lex_char_constant(const char* s, token* tok) {
 
 static void copy_char(uint32_t c, void* dst, char_width char_width) {
   switch (char_width) {
-    case CW_1:
+    case CW_UTF8:
       *(uint8_t*)dst = (uint8_t)c;
       break;
-    case CW_2:
+    case CW_UTF16:
       *(uint16_t*)dst = (uint16_t)c;
       break;
-    case CW_4:
+    case CW_UTF32:
       *(uint32_t*)dst = c;
       break;
     default:
@@ -595,15 +605,20 @@ static const char* consume_string_body(const char* s, array* arr,
     }
 
     uint32_t c = 0;
-    void* dst = array_push_back(arr);
     if (*s == '\\') {
+      // Escape sequence.
       ++s;
       ASSIGN_OR_RETURN(s, consume_escape_sequence(s, &c, char_width));
-    } else {
-      // TODO: need a UTF decode method.
-      c = (uint32_t)*s;
-      ++s;
+      void* dst = array_push_back(arr);
+      copy_char(c, dst, char_width);
+      continue;
     }
+
+    void* dst = array_push_back(arr);
+    // Regular character.
+    // TODO: need a UTF decode method.
+    c = (uint32_t)*s;
+    ++s;
     copy_char(c, dst, char_width);
   }
   // Unterminated string literal.
@@ -612,19 +627,19 @@ static const char* consume_string_body(const char* s, array* arr,
 
 bool lex_string_literal(const char* s, token* tok) {
   const char* start = s;
-  char_width char_width = CW_1;
+  char_width char_width = CW_UTF8;
   // Handle prefixes.
   if (strncmp(s, "u8", 2) == 0) {
     // u8: 1 byte character, UTF-8
-    char_width = CW_1;
+    char_width = CW_UTF8;
     s += 2;
   } else if (s[0] == 'u') {
     // u: 2 byte character, UTF-16
-    char_width = CW_2;
+    char_width = CW_UTF16;
     ++s;
   } else if (s[0] == 'U' || s[0] == 'L') {
     // U, L: 4 byte character, UTF-32
-    char_width = CW_4;
+    char_width = CW_UTF32;
     ++s;
   }
   array arr;
