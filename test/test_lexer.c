@@ -327,44 +327,44 @@ void test_lex_punctuator(void) {
 }
 
 void test_char_constant(void) {
-  TEST_ASSERT_EQUAL(3, lex_char_constant("'a'"));
+  TEST_ASSERT_EQUAL(3, lex_char_literal("'a'"));
   // '\a'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\a'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\a'"));
   // '\b'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\b'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\b'"));
   // '\e'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\e'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\e'"));
   // '\f'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\f'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\f'"));
   // '\n'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\n'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\n'"));
   // '\t'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\t'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\t'"));
   // '\v'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\v'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\v'"));
   // '\\'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\\\'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\\'"));
   // '\''
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\\''"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\''"));
   // '\"'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\\"'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\"'"));
   // '\?'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\\?'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\?'"));
   // '\123'
-  TEST_ASSERT_EQUAL(6, lex_char_constant("'\\123'"));
+  TEST_ASSERT_EQUAL(6, lex_char_literal("'\\123'"));
   // '\xcf'
-  TEST_ASSERT_EQUAL(6, lex_char_constant("'\\xcf'"));
+  TEST_ASSERT_EQUAL(6, lex_char_literal("'\\xcf'"));
   // u'\xcdef'
-  TEST_ASSERT_EQUAL(9, lex_char_constant("u'\\xcdef'"));
+  TEST_ASSERT_EQUAL(9, lex_char_literal("u'\\xcdef'"));
   // U'\xabcdef12'
-  TEST_ASSERT_EQUAL(13, lex_char_constant("U'\\xabcdef12'"));
+  TEST_ASSERT_EQUAL(13, lex_char_literal("U'\\xabcdef12'"));
   // U'\xa3456789'
-  TEST_ASSERT_EQUAL(13, lex_char_constant("U'\\xa3456789'"));
-  TEST_ASSERT_EQUAL(5, lex_char_constant("'abc'"));
+  TEST_ASSERT_EQUAL(13, lex_char_literal("U'\\xa3456789'"));
+  TEST_ASSERT_EQUAL(5, lex_char_literal("'abc'"));
   // '\z'
-  TEST_ASSERT_EQUAL(4, lex_char_constant("'\\z'"));
+  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\z'"));
   // '\123\123'
-  TEST_ASSERT_EQUAL(10, lex_char_constant("'\\123\\123'"));
+  TEST_ASSERT_EQUAL(10, lex_char_literal("'\\123\\123'"));
 }
 
 void test_string_literal(void) {
