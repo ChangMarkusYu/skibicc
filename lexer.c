@@ -568,7 +568,7 @@ static const char* consume_char_body(const char* s, uint32_t* dst) {
       c = *s;
       ++s;
     }
-    res = (res << 4) | c;
+    res = (res << 8) | c;
     ++len;
   }
   // Unterminated string/char literal.
