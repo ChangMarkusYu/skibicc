@@ -9,8 +9,7 @@ void setUp(void) {}
 
 void tearDown(void) {}
 
-static void verify_identifier(token* tok, const char* expected) {
-  TEST_ASSERT_EQUAL(tok->token_type, TK_IDENT);
+static void verify_tok_str(token* tok, const char* expected) {
   char* actual = malloc(tok->size);
   if (!actual) {
     printf("FAILED: malloc() failed\n");
@@ -19,6 +18,23 @@ static void verify_identifier(token* tok, const char* expected) {
   memcpy(actual, tok->loc, tok->size);
   TEST_ASSERT_EQUAL_STRING_LEN(expected, actual, strlen(expected));
   free(actual);
+}
+
+static void verify_identifier(token* tok, const char* expected) {
+  TEST_ASSERT_EQUAL(TK_IDENT, tok->token_type);
+  verify_tok_str(tok, expected);
+}
+
+static void verify_keyword(token* tok, const char* expected) {
+  TEST_ASSERT_EQUAL(TK_KEYWRD, tok->token_type);
+  verify_tok_str(tok, expected);
+}
+
+static void verify_integer_constant(token* tok, const char* expected_str,
+                                    uint64_t expected) {
+  TEST_ASSERT_EQUAL(TK_ICONST, tok->token_type);
+  TEST_ASSERT_EQUAL(expected, tok->constant.int_val);
+  verify_tok_str(tok, expected_str);
 }
 
 void test_lex_identifier(void) {
@@ -83,38 +99,58 @@ void test_lex_identifier(void) {
 }
 
 void test_lex_decimal_integer(void) {
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234"));
-  TEST_ASSERT_EQUAL(17, lex_numeric_constant("90283746512379567"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234;"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234)"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234/123"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234+456"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234-456"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234*456"));
-  TEST_ASSERT_EQUAL(3, lex_numeric_constant("234,456"));
+  token tok;
+  memset(&tok, 0, sizeof(token));
 
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant(""));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant(";123"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("foobar123"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("123foobar"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("__123"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("__123__"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("thisdoes123notcount"));
+  TEST_ASSERT_TRUE(lex_numeric_constant("234", &tok));
+  verify_integer_constant(&tok, "234", 234);
+  TEST_ASSERT_TRUE(lex_numeric_constant("90283746512379567", &tok));
+  verify_integer_constant(&tok, "90283746512379567", 90283746512379567);
+  TEST_ASSERT_TRUE(lex_numeric_constant("234;", &tok));
+  verify_integer_constant(&tok, "234", 234);
+  TEST_ASSERT_TRUE(lex_numeric_constant("123)", &tok));
+  verify_integer_constant(&tok, "123", 123);
+  TEST_ASSERT_TRUE(lex_numeric_constant("456/123", &tok));
+  verify_integer_constant(&tok, "456", 456);
+  TEST_ASSERT_TRUE(lex_numeric_constant("567+456", &tok));
+  verify_integer_constant(&tok, "567", 567);
+  TEST_ASSERT_TRUE(lex_numeric_constant("789-456", &tok));
+  verify_integer_constant(&tok, "789", 789);
+  TEST_ASSERT_TRUE(lex_numeric_constant("123*456", &tok));
+  verify_integer_constant(&tok, "123", 123);
+  TEST_ASSERT_TRUE(lex_numeric_constant("567,456", &tok));
+  verify_integer_constant(&tok, "567", 567);
 
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("ull"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("ull123"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("123ull123"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("123ullull"));
-  TEST_ASSERT_EQUAL(0, lex_numeric_constant("123ullthisdoesnotcount"));
+  TEST_ASSERT_FALSE(lex_numeric_constant("", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant(";123", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("foobar123", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("123foobar", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("__123", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("__123__", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("thisdoes123notcount", &tok));
 
-  TEST_ASSERT_EQUAL(4, lex_numeric_constant("674u"));
-  TEST_ASSERT_EQUAL(7, lex_numeric_constant("1937Ull"));
-  TEST_ASSERT_EQUAL(7, lex_numeric_constant("67489LL"));
-  TEST_ASSERT_EQUAL(6, lex_numeric_constant("2937ul"));
-  TEST_ASSERT_EQUAL(7, lex_numeric_constant("1937LLu"));
-  TEST_ASSERT_EQUAL(6, lex_numeric_constant("2937Lu"));
-  TEST_ASSERT_EQUAL(7, lex_numeric_constant("2937ull;"));
-  TEST_ASSERT_EQUAL(6, lex_numeric_constant("2937lu;thisdoesnotcount"));
+  TEST_ASSERT_FALSE(lex_numeric_constant("ull", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("ull123", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("123ull123", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("123ullull", &tok));
+  TEST_ASSERT_FALSE(lex_numeric_constant("123ullthisdoesnotcount", &tok));
+
+  TEST_ASSERT_TRUE(lex_numeric_constant("674u", &tok));
+  verify_integer_constant(&tok, "674u", 674);
+  TEST_ASSERT_TRUE(lex_numeric_constant("1937Ull", &tok));
+  verify_integer_constant(&tok, "1937Ull", 1937);
+  TEST_ASSERT_TRUE(lex_numeric_constant("67489LL", &tok));
+  verify_integer_constant(&tok, "67489LL", 67489);
+  TEST_ASSERT_TRUE(lex_numeric_constant("2937ul", &tok));
+  verify_integer_constant(&tok, "2937ul", 2937);
+  TEST_ASSERT_TRUE(lex_numeric_constant("1937LLu", &tok));
+  verify_integer_constant(&tok, "1937LLu", 1937);
+  TEST_ASSERT_TRUE(lex_numeric_constant("2937Lu", &tok));
+  verify_integer_constant(&tok, "2937Lu", 2937);
+  TEST_ASSERT_TRUE(lex_numeric_constant("1937ull;", &tok));
+  verify_integer_constant(&tok, "1937ull", 1937);
+  TEST_ASSERT_TRUE(lex_numeric_constant("2937lu;thisdoesnotcount", &tok));
+  verify_integer_constant(&tok, "2937lu", 2937);
 }
 
 void test_lex_octal_integer(void) {
@@ -328,11 +364,20 @@ void test_lex_keyword(void) {
       "goto",     "union",
   };
 
+  token tok;
+  memset(&tok, 0, sizeof(token));
   for (size_t i = 0; i < sizeof(keywords) / sizeof(keywords[0]); ++i) {
     const char* word = keywords[i];
-    TEST_ASSERT_TRUE(is_keyword(word, strlen(word)));
+    lex_identifier(word, &tok);
+    verify_keyword(&tok, word);
   }
-  TEST_ASSERT_TRUE(is_keyword("break;", 5));
+  TEST_ASSERT_TRUE(lex_identifier("break;", &tok));
+  verify_keyword(&tok, "break");
+  TEST_ASSERT_TRUE(lex_identifier("switch{this does not count}", &tok));
+  verify_keyword(&tok, "switch");
+  TEST_ASSERT_TRUE(lex_identifier("for(int i = 0;i < 2;++i){}", &tok));
+  verify_keyword(&tok, "for");
+
   TEST_ASSERT_FALSE(is_keyword("breakit;", 7));
   TEST_ASSERT_FALSE(is_keyword("foobar", 5));
   TEST_ASSERT_FALSE(is_keyword("123456", 6));
