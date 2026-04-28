@@ -370,7 +370,7 @@ static const char* consume_hex_escape_sequence(const char* s, uint32_t* dst,
     if (isdigit(digit)) {
       c |= digit - '0';
     } else {
-      c |= digit - 'a';
+      c |= (digit - 'a' + 10);
     }
     ++s;
     ++len;
@@ -575,9 +575,9 @@ static const char* consume_char_body(const char* s, uint32_t* dst) {
 bool lex_char_literal(const char* s, token* tok) {
   uint32_t res = 0;
   const char* start = s;
-  s = consume_char_body(s, &res);
-  if (s) {
-    s = consume_wide_char_body(s, &res);
+  s = consume_char_body(start, &res);
+  if (!s) {
+    s = consume_wide_char_body(start, &res);
   }
   if (!s) {
     return false;

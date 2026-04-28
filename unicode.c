@@ -53,8 +53,10 @@ const char* decode_utf8(const char* s, uint32_t* out) {
   for (size_t i = 1; i < len; ++i) {
     ++s;
     c = *s;
-    res = (res << 6) & (c | 0x3F);
+    res = (res << 6) | (c & 0x3F);
   }
+  // Skip the last consumed character.
+  ++s;
   *out = res;
-  return s + len;
+  return s;
 }

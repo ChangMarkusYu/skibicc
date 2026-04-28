@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uchar.h>
 
 #include "../lexer.h"
 #include "../unity/unity.h"
@@ -33,7 +34,7 @@ static void verify_keyword(token* tok, const char* expected) {
 static void verify_integer_constant(token* tok, const char* expected_str,
                                     uint64_t expected) {
   TEST_ASSERT_EQUAL(TK_ICONST, tok->token_type);
-  TEST_ASSERT_EQUAL(expected, tok->constant.int_val);
+  TEST_ASSERT_EQUAL_UINT64(expected, tok->constant.int_val);
   verify_tok_str(tok, expected_str);
 }
 
@@ -46,6 +47,27 @@ static void verify_float_constant(token* tok, const char* expected_str,
                                   double expected) {
   TEST_ASSERT_EQUAL(TK_FCONST, tok->token_type);
   TEST_ASSERT_EQUAL_DOUBLE(expected, tok->constant.float_val);
+  verify_tok_str(tok, expected_str);
+}
+
+static void verify_char_constant(token* tok, const char* expected_str,
+                                 char expected) {
+  TEST_ASSERT_EQUAL(TK_ICONST, tok->token_type);
+  TEST_ASSERT_EQUAL_CHAR(expected, tok->constant.int_val);
+  verify_tok_str(tok, expected_str);
+}
+
+static void verify_char16_constant(token* tok, const char* expected_str,
+                                   char16_t expected) {
+  TEST_ASSERT_EQUAL(TK_ICONST, tok->token_type);
+  TEST_ASSERT_EQUAL_UINT16(expected, tok->constant.int_val);
+  verify_tok_str(tok, expected_str);
+}
+
+static void verify_char32_constant(token* tok, const char* expected_str,
+                                   char32_t expected) {
+  TEST_ASSERT_EQUAL(TK_ICONST, tok->token_type);
+  TEST_ASSERT_EQUAL_UINT32(expected, tok->constant.int_val);
   verify_tok_str(tok, expected_str);
 }
 
@@ -552,44 +574,59 @@ void test_lex_punctuator(void) {
 }
 
 void test_char_constant(void) {
-  TEST_ASSERT_EQUAL(3, lex_char_literal("'a'"));
-  // '\a'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\a'"));
-  // '\b'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\b'"));
-  // '\e'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\e'"));
-  // '\f'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\f'"));
-  // '\n'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\n'"));
-  // '\t'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\t'"));
-  // '\v'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\v'"));
-  // '\\'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\\'"));
-  // '\''
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\''"));
-  // '\"'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\"'"));
-  // '\?'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\\?'"));
-  // '\123'
-  TEST_ASSERT_EQUAL(6, lex_char_literal("'\\123'"));
-  // '\xcf'
-  TEST_ASSERT_EQUAL(6, lex_char_literal("'\\xcf'"));
-  // u'\xcdef'
-  TEST_ASSERT_EQUAL(9, lex_char_literal("u'\\xcdef'"));
-  // U'\xabcdef12'
-  TEST_ASSERT_EQUAL(13, lex_char_literal("U'\\xabcdef12'"));
-  // U'\xa3456789'
-  TEST_ASSERT_EQUAL(13, lex_char_literal("U'\\xa3456789'"));
-  TEST_ASSERT_EQUAL(5, lex_char_literal("'abc'"));
-  // '\z'
-  TEST_ASSERT_EQUAL(4, lex_char_literal("'\\z'"));
-  // '\123\123'
-  TEST_ASSERT_EQUAL(10, lex_char_literal("'\\123\\123'"));
+  token tok;
+  memset(&tok, 0, sizeof(token));
+
+  TEST_ASSERT_TRUE(lex_char_literal("'a'", &tok));
+  verify_char_constant(&tok, "'a'", 'a');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\a'", &tok));
+  verify_char_constant(&tok, "'\\a'", '\a');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\b'", &tok));
+  verify_char_constant(&tok, "'\\b'", '\b');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\e'", &tok));
+  verify_char_constant(&tok, "'\\e'", /* '\e' */ '\033');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\f'", &tok));
+  verify_char_constant(&tok, "'\\f'", '\f');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\n'", &tok));
+  verify_char_constant(&tok, "'\\n'", '\n');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\t'", &tok));
+  verify_char_constant(&tok, "'\\t'", '\t');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\v'", &tok));
+  verify_char_constant(&tok, "'\\v'", '\v');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\\\'", &tok));
+  verify_char_constant(&tok, "'\\\\'", '\\');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\\''", &tok));
+  verify_char_constant(&tok, "'\\\''", '\'');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\\"'", &tok));
+  verify_char_constant(&tok, "'\\\"'", '\"');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\?'", &tok));
+  verify_char_constant(&tok, "'\\?'", '\?');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\123'", &tok));
+  verify_char_constant(&tok, "'\\123'", '\123');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\xcf'", &tok));
+  verify_char_constant(&tok, "'\\xcf'", '\xcf');
+
+  TEST_ASSERT_TRUE(lex_char_literal("u'\\xcdef'", &tok));
+  verify_char16_constant(&tok, "u'\\xcdef'", u'\xcdef');
+  TEST_ASSERT_TRUE(lex_char_literal("u'\xe4\xb8\x96'", &tok));
+  verify_char16_constant(&tok, "u'\xe4\xb8\x96'", u'世');
+  TEST_ASSERT_TRUE(lex_char_literal("U'\\xabcdef12'", &tok));
+  verify_char32_constant(&tok, "U'\\xabcdef12'", U'\xabcdef12');
+  TEST_ASSERT_TRUE(lex_char_literal("L'\\xa3456789'", &tok));
+  verify_char32_constant(&tok, "L'\\xa3456789'", L'\xa3456789');
+
+  TEST_ASSERT_TRUE(lex_char_literal("'abc'", &tok));
+  verify_char_constant(&tok, "'abc'", 'c');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\z'", &tok));
+  verify_char_constant(&tok, "'\\z'", 'z');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\z\\s\\u'", &tok));
+  verify_char_constant(&tok, "'\\z\\s\\u'", 'u');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\123\\123'", &tok));
+  verify_char_constant(&tok, "'\\123\\123'", '\123');
+  TEST_ASSERT_TRUE(lex_char_literal("'\\xab\\xcd'", &tok));
+  verify_char_constant(&tok, "'\\xab\\xcd'", '\xcd');
+
+  TEST_ASSERT_FALSE(lex_char_literal("''", &tok));
 }
 
 void test_string_literal(void) {
