@@ -1,3 +1,6 @@
+//!@file
+//!@brief Header file for various unicode utilites.
+
 #ifndef SKIBICC_UNICODE_H
 #define SKIBICC_UNICODE_H
 

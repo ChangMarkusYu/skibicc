@@ -1,3 +1,6 @@
+//!@file
+//!@brief Source file for various unicode utilites.
+
 #include "unicode.h"
 
 #include <stdint.h>

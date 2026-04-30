@@ -1,3 +1,6 @@
+//!@file
+//!@brief Header file for generic dynamic array.
+
 #ifndef SKIBICC_ARRAY_H
 #define SKIBICC_ARRAY_H
 

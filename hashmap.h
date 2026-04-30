@@ -1,3 +1,6 @@
+//!@file
+//!@brief Header file for the hashmap.
+
 #ifndef SKIBICC_HASHMAP_H
 #define SKIBICC_HASHMAP_H
 

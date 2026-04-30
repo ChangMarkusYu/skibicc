@@ -1,3 +1,6 @@
+//!@file
+//!@brief Header file for various string functions.
+
 #ifndef SKIBICC_STRINGS_H
 #define SKIBICC_STRINGS_H
 

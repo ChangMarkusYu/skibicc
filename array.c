@@ -1,3 +1,6 @@
+//!@file
+//!@brief Source file for generic dynamic array.
+
 #include "array.h"
 
 #include <stddef.h>
@@ -7,6 +10,7 @@
 
 #include "errors.h"
 
+//! Initial capacity of the dynamic array.
 const size_t INITIAL_CAPACITY = 10;
 
 void array_init(array* arr, size_t item_size) {

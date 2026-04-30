@@ -412,9 +412,9 @@ static const char* consume_oct_escape_sequence(const char* s, uint32_t* dst,
   return s;
 }
 
-// Given a character `c` which is the character after the slash ('\') in an
-// character escape sequence, returns its corresponding escape character. For
-// example, given 't', return '\t'.
+//! Given a character `c` which is the character after the slash ('\') in an
+//! character escape sequence, returns its corresponding escape character. For
+//! example, given 't', return '\t'.
 static char get_escape_char(char c) {
   switch (c) {
     case '\'':

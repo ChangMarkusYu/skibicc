@@ -1,3 +1,6 @@
+//!@file
+//!@brief Header file for the lexer.
+
 #ifndef SKIBICC_LEXER_H
 #define SKIBICC_LEXER_H
 

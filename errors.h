@@ -1,3 +1,6 @@
+//!@file
+//!@brief Header file for various error printing functions.
+
 #ifndef SKIBICC_ERRORS_H
 #define SKIBICC_ERRORS_H
 
