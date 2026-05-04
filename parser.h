@@ -1,5 +1,7 @@
 #ifndef SKIBICC_PARSER_H
 
-void parse(void);
+#include "array.h"
+
+void parse(array* tokens);
 
 #endif  // SKIBICC_PARSER_H
