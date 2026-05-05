@@ -50,16 +50,23 @@ void emit_error(token* actual, const char* expecte_tok) {
         actual->col_num, expecte_tok, actual_str);
 }
 
+static bool is_token_string_match(token* tok, const char* expected) {
+  size_t len = strlen(expected);
+  if (len != tok->size) {
+    return false;
+  }
+  if (strncmp(tok->loc, expected, len) != 0) {
+    return false;
+  }
+  return true;
+}
+
 static void expect_token_internal(token* actual, token_type expected_type,
                                   const char* expecte_tok) {
   if (actual->token_type != expected_type) {
     emit_error(actual, expecte_tok);
   }
-  size_t len = strlen(expecte_tok);
-  if (len != actual->size) {
-    emit_error(actual, expecte_tok);
-  }
-  if (strncmp(actual->loc, expecte_tok, len) != 0) {
+  if (is_token_string_match(actual, expecte_tok)) {
     emit_error(actual, expecte_tok);
   }
 }
@@ -69,6 +76,10 @@ static token* peek_token(parser* parser) {
 }
 
 static inline void consume_token(parser* parser) { parser->cur++; }
+
+static inline bool has_token(parser* parser) {
+  return parser->cur >= parser->tokens->size;
+}
 
 static void consume_keyword(parser* parser, const char* expecte_tok) {
   token* tok = peek_token(parser);
@@ -82,7 +93,7 @@ static void consume_punctuator(parser* parser, const char* expecte_tok) {
   consume_token(parser);
 }
 
-static void consume_literal(parser* parser) {
+static void consume_any_literal(parser* parser) {
   token* tok = peek_token(parser);
   if (tok->token_type != TK_ICONST && tok->token_type != TK_FCONST &&
       tok->token_type != TK_STRLIT) {
@@ -95,7 +106,7 @@ static void consume_literal(parser* parser) {
   consume_token(parser);
 }
 
-static void consume_identifier(parser* parser) {
+static void consume_any_identifier(parser* parser) {
   token* tok = peek_token(parser);
   if (tok->token_type != TK_IDENT) {
     error("[%zu, %zu]: unexpected token type. Expected an identifier.",
@@ -104,7 +115,133 @@ static void consume_identifier(parser* parser) {
   consume_token(parser);
 }
 
-static void parse_expression(parser* parser) { consume_literal(parser); }
+static void consume_primary_expression(parser* parser) {
+  // TODO: implement this.
+}
+
+static bool is_punctuator_token(token* tok, const char* expected) {
+  if (tok->token_type != TK_PUNCT) {
+    return false;
+  }
+  return is_token_string_match(tok, expected);
+}
+
+static bool is_prefix_operator(token* tok) {
+  return is_punctuator_token(tok, "++") || is_punctuator_token(tok, "--");
+}
+
+static bool is_postfix_operator(token* tok) {
+  return is_punctuator_token(tok, "++") || is_punctuator_token(tok, "--");
+}
+
+static bool is_unary_operator(token* tok) {
+  return is_punctuator_token(tok, "&") || is_punctuator_token(tok, "*") ||
+         is_punctuator_token(tok, "+") || is_punctuator_token(tok, "-") ||
+         is_punctuator_token(tok, "~") || is_punctuator_token(tok, "!");
+}
+
+static bool is_keyword_token(token* tok, const char* expected) {
+  if (tok->token_type != TK_KEYWRD) {
+    return false;
+  }
+  return is_token_string_match(tok, expected);
+}
+
+// Forward declarations.
+static void parse_unary_expression(parser*);
+static void parse_expression(parser*);
+
+static void parse_type_name(parser* parser) {
+  // TODO: Implement this.
+}
+
+static void parse_cast_expression(parser* parser) {
+  token* tok = peek_token(parser);
+  if (is_punctuator_token(tok, "(")) {
+    consume_token(parser);
+    parse_type_name(parser);
+    consume_punctuator(parser, ")");
+  }
+  parse_unary_expression(parser);
+}
+
+static void parse_postfix_expression(parser* parser) {
+  // TODO: handle compound struct literal ( type-name ) { initializer-list }
+
+  consume_primary_expression(parser);
+  while (has_token(parser)) {
+    token* tok = peek_token(parser);
+    // postfix-expression [ expression ]
+    if (is_punctuator_token(tok, "[")) {
+      consume_token(parser);
+      parse_expression(parser);
+      consume_punctuator(parser, "]");
+      continue;
+    }
+
+    // postfix-expression ( argument-expression-list_opt )
+    if (is_punctuator_token(tok, "(")) {
+      consume_token(parser);
+      tok = peek_token(parser);
+      if (is_punctuator_token(tok, ")")) {
+        consume_token(parser);
+        continue;
+      }
+      parse_expression(parser);
+      consume_punctuator(parser, ")");
+      continue;
+    }
+
+    // postfix-expression . identifier
+    // postfix-expression -> identifier
+    if (is_punctuator_token(tok, ".") || is_punctuator_token(tok, "->")) {
+      consume_token(parser);
+      consume_any_identifier(parser);
+      continue;
+    }
+
+    // postfix-expression ++
+    // postfix-expression --
+    if (is_postfix_operator(tok)) {
+      consume_token(parser);
+      continue;
+    }
+    // No matching token - no more postfix expression to parse.
+    return;
+  }
+}
+
+static void parse_unary_expression(parser* parser) {
+  token* tok = peek_token(parser);
+  if (is_prefix_operator(tok)) {
+    consume_token(parser);
+    parse_unary_expression(parser);
+    return;
+  }
+
+  if (is_unary_operator(tok)) {
+    consume_token(parser);
+    parse_cast_expression(parser);
+    return;
+  }
+
+  if (is_keyword_token(tok, "sizeof")) {
+    consume_token(parser);
+    if (is_punctuator_token(tok, "(")) {
+      consume_token(parser);
+      parse_type_name(parser);
+      consume_punctuator(parser, ")");
+      return;
+    }
+    parse_unary_expression(parser);
+    return;
+  }
+  // TODO: Handle _Alignof
+
+  parse_postfix_expression(parser);
+}
+
+static void parse_expression(parser* parser) { consume_any_literal(parser); }
 
 static void parse_statement(parser* parser) {
   consume_keyword(parser, "return");
@@ -116,7 +253,7 @@ static void parse_statement(parser* parser) {
 
 static void parse_function_definition(parser* parser) {
   consume_keyword(parser, "int");
-  consume_identifier(parser);
+  consume_any_identifier(parser);
 
   consume_punctuator(parser, "(");
   consume_keyword(parser, "void");
