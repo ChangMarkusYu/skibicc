@@ -46,7 +46,7 @@ void emit_error(token* actual, const char* expecte_tok) {
   char* actual_str = malloc(actual->size + 1);
   memcpy(actual, actual->loc, actual->size);
   actual_str[actual->size] = '\0';
-  error("Unexpected token at [%zu, %zu]. Expected %s, got %s", actual->line_num,
+  error("[%zu, %zu]: unexpected token. Expected %s, got %s", actual->line_num,
         actual->col_num, expecte_tok, actual_str);
 }
 
@@ -64,11 +64,11 @@ static void expect_token_internal(token* actual, token_type expected_type,
   }
 }
 
-inline token* peek_token(parser* parser) {
+static token* peek_token(parser* parser) {
   return array_at(parser->tokens, parser->cur);
 }
 
-inline void consume_token(parser* parser) { parser->cur++; }
+static inline void consume_token(parser* parser) { parser->cur++; }
 
 static void consume_keyword(parser* parser, const char* expecte_tok) {
   token* tok = peek_token(parser);
@@ -88,7 +88,9 @@ static void consume_literal(parser* parser) {
       tok->token_type != TK_STRLIT) {
     // TODO: This is not helpful. Write token type to string method and make
     // this pretty.
-    error("Unexpected token type. Expected a constant or a literal.");
+    error(
+        "[%zu, %zu]: unexpected token type. Expected a constant or a literal.",
+        tok->line_num, tok->col_num);
   }
   consume_token(parser);
 }
@@ -96,14 +98,15 @@ static void consume_literal(parser* parser) {
 static void consume_identifier(parser* parser) {
   token* tok = peek_token(parser);
   if (tok->token_type != TK_IDENT) {
-    error("Unexpected token type. Expected an identifier.");
+    error("[%zu, %zu]: unexpected token type. Expected an identifier.",
+          tok->line_num, tok->col_num);
   }
   consume_token(parser);
 }
 
-void parse_expression(parser* parser) { consume_literal(parser); }
+static void parse_expression(parser* parser) { consume_literal(parser); }
 
-void parse_statement(parser* parser) {
+static void parse_statement(parser* parser) {
   consume_keyword(parser, "return");
 
   parse_expression(parser);
@@ -111,7 +114,7 @@ void parse_statement(parser* parser) {
   consume_punctuator(parser, ";");
 }
 
-void parse_function_definition(parser* parser) {
+static void parse_function_definition(parser* parser) {
   consume_keyword(parser, "int");
   consume_identifier(parser);
 
