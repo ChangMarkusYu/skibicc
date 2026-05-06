@@ -761,9 +761,10 @@ array lex(const char* s) {
     tok->line_num = line_num;
     tok->col_num = col_num;
 
-    // TODO: Remember lexing order: String literals and constants must come
-    // before punctuators. This is because string literals and constants may
-    // contain characters from punctuators.
+    // Order is important here. String literals and constants must come before
+    // identifiers and punctuators. This is because string literals and
+    // constants may contain prefixes that qualify as identifiers or
+    // punctuators.
     bool res = false;
     res = lex_numeric_constant(s, tok);
     if (!res) {
@@ -778,13 +779,21 @@ array lex(const char* s) {
     if (!res) {
       res = lex_punctuator(s, tok);
     }
-
     if (!res) {
+      // TODO: Maybe give the token a size of 1 and TK_UNKNOWN type and let
+      // the parser worry about it.
       error("[%zu:%zu] error: unknown token.", line_num, col_num);
     }
     s = tok->loc + tok->size;
     col_num += tok->size;
   }
 
+  // Inserts an EOF token at the end.
+  token* tok = array_push_back(&tokens);
+  memset(tok, 0, sizeof(token));
+  tok->token_type = TK_EOF;
+  tok->loc = "EOF";
+  tok->line_num = line_num;
+  tok->col_num = col_num;
   return tokens;
 }

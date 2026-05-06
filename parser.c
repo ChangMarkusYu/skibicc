@@ -53,7 +53,7 @@ static token* peek_token(parser* parser) {
 static inline void consume_token(parser* parser) { parser->cur++; }
 
 static inline bool has_token(parser* parser) {
-  return parser->cur >= parser->tokens->size;
+  return parser->cur < parser->tokens->size;
 }
 
 static void check_token(token* actual, token_type expected_type,

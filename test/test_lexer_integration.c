@@ -75,7 +75,8 @@ void test_lexer_basic(void) {
                             ")",      ";",      "return",
                             "0",      ";",      "}"};
 
-  TEST_ASSERT_EQUAL(expected_tokens.size, tokens.size);
+  // Plus 1 due to the EOF token.
+  TEST_ASSERT_EQUAL(expected_tokens.size + 1, tokens.size);
   for (size_t i = 0; i < expected_tokens.size; ++i) {
     token* expected_token = array_at(&expected_tokens, i);
     token* actual_token = array_at(&tokens, i);
@@ -86,6 +87,9 @@ void test_lexer_basic(void) {
     TEST_ASSERT_EQUAL_STRING_LEN(expected_text, actual_token->loc,
                                  actual_token->size);
   }
+  // EOF token at the end.
+  token* actual_token = array_at(&tokens, expected_tokens.size);
+  TEST_ASSERT_EQUAL(TK_EOF, actual_token->token_type);
 
   free(buf);
   array_destroy(&tokens);

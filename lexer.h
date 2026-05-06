@@ -24,8 +24,10 @@ typedef enum token_type {
   TK_FCONST,
   //! String literal.
   TK_STRLIT,
-  //! Punctuator
+  //! Punctuator.
   TK_PUNCT,
+  //! End of file.
+  TK_EOF,
 } token_type;
 
 // !Represents a single lexical token.
