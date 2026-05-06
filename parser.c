@@ -7,49 +7,6 @@
 #include "errors.h"
 #include "lexer.h"
 
-typedef enum ast_node_type {
-  AN_UNKNOWN,
-  AN_EXPR,
-  AN_LITERAL,
-  AN_STMNT,
-  AN_FUNCDEF,
-  AN_RETURN,
-  AN_SEMICOL,
-} ast_node_type;
-
-typedef struct ast_node ast_node;
-
-typedef struct ast_expression {
-  token* tok;
-} ast_expression;
-
-typedef struct ast_statement {
-  ast_node* expression;
-} ast_statement;
-
-struct ast_node {
-  ast_node_type node_type;
-  union {
-    ast_expression* expression;
-    ast_statement* statement;
-  } node;
-};
-
-typedef struct parser {
-  array* tokens;
-  size_t cur;
-  ast_node* ast;
-} parser;
-
-// TODO: Too basic. Make it pretty later.
-void emit_error(token* actual, const char* expecte_tok) {
-  char* actual_str = malloc(actual->size + 1);
-  memcpy(actual, actual->loc, actual->size);
-  actual_str[actual->size] = '\0';
-  error("[%zu, %zu]: unexpected token. Expected %s, got %s", actual->line_num,
-        actual->col_num, expecte_tok, actual_str);
-}
-
 static bool is_token_string_match(token* tok, const char* expected) {
   size_t len = strlen(expected);
   if (len != tok->size) {
@@ -59,64 +16,6 @@ static bool is_token_string_match(token* tok, const char* expected) {
     return false;
   }
   return true;
-}
-
-static void expect_token_internal(token* actual, token_type expected_type,
-                                  const char* expecte_tok) {
-  if (actual->token_type != expected_type) {
-    emit_error(actual, expecte_tok);
-  }
-  if (is_token_string_match(actual, expecte_tok)) {
-    emit_error(actual, expecte_tok);
-  }
-}
-
-static token* peek_token(parser* parser) {
-  return array_at(parser->tokens, parser->cur);
-}
-
-static inline void consume_token(parser* parser) { parser->cur++; }
-
-static inline bool has_token(parser* parser) {
-  return parser->cur >= parser->tokens->size;
-}
-
-static void consume_keyword(parser* parser, const char* expecte_tok) {
-  token* tok = peek_token(parser);
-  expect_token_internal(tok, TK_KEYWRD, expecte_tok);
-  consume_token(parser);
-}
-
-static void consume_punctuator(parser* parser, const char* expecte_tok) {
-  token* tok = peek_token(parser);
-  expect_token_internal(tok, TK_PUNCT, expecte_tok);
-  consume_token(parser);
-}
-
-static void consume_any_literal(parser* parser) {
-  token* tok = peek_token(parser);
-  if (tok->token_type != TK_ICONST && tok->token_type != TK_FCONST &&
-      tok->token_type != TK_STRLIT) {
-    // TODO: This is not helpful. Write token type to string method and make
-    // this pretty.
-    error(
-        "[%zu, %zu]: unexpected token type. Expected a constant or a literal.",
-        tok->line_num, tok->col_num);
-  }
-  consume_token(parser);
-}
-
-static void consume_any_identifier(parser* parser) {
-  token* tok = peek_token(parser);
-  if (tok->token_type != TK_IDENT) {
-    error("[%zu, %zu]: unexpected token type. Expected an identifier.",
-          tok->line_num, tok->col_num);
-  }
-  consume_token(parser);
-}
-
-static void consume_primary_expression(parser* parser) {
-  // TODO: implement this.
 }
 
 static bool is_punctuator_token(token* tok, const char* expected) {
@@ -147,6 +46,53 @@ static bool is_keyword_token(token* tok, const char* expected) {
   return is_token_string_match(tok, expected);
 }
 
+static token* peek_token(parser* parser) {
+  return array_at(parser->tokens, parser->cur);
+}
+
+static inline void consume_token(parser* parser) { parser->cur++; }
+
+static inline bool has_token(parser* parser) {
+  return parser->cur >= parser->tokens->size;
+}
+
+static void check_token(token* actual, token_type expected_type,
+                        const char* expecte_tok) {
+  if (actual->token_type != expected_type ||
+      !is_token_string_match(actual, expecte_tok)) {
+    error_tok_fmt(actual, "Expected a \"%s\".", expecte_tok);
+  }
+}
+
+static void consume_keyword(parser* parser, const char* expecte_tok) {
+  token* tok = peek_token(parser);
+  check_token(tok, TK_KEYWRD, expecte_tok);
+  consume_token(parser);
+}
+
+static void consume_punctuator(parser* parser, const char* expecte_tok) {
+  token* tok = peek_token(parser);
+  check_token(tok, TK_PUNCT, expecte_tok);
+  consume_token(parser);
+}
+
+static void consume_any_literal(parser* parser) {
+  token* tok = peek_token(parser);
+  if (tok->token_type != TK_ICONST && tok->token_type != TK_FCONST &&
+      tok->token_type != TK_STRLIT) {
+    error_tok_fmt(tok, "Expected a constant or a literal.");
+  }
+  consume_token(parser);
+}
+
+static void consume_any_identifier(parser* parser) {
+  token* tok = peek_token(parser);
+  if (tok->token_type != TK_IDENT) {
+    error_tok_fmt(tok, "Expected an identifier.");
+  }
+  consume_token(parser);
+}
+
 // Forward declarations.
 static void parse_unary_expression(parser*);
 static void parse_expression(parser*);
@@ -165,10 +111,32 @@ static void parse_cast_expression(parser* parser) {
   parse_unary_expression(parser);
 }
 
+static void parse_primary_expression(parser* parser) {
+  token* tok = peek_token(parser);
+  token_type tok_type = tok->token_type;
+  // identifier, constant or string literal.
+  if (tok_type == TK_ICONST || tok_type == TK_FCONST || tok_type == TK_STRLIT ||
+      tok_type == TK_IDENT) {
+    consume_token(parser);
+    return;
+  }
+
+  // ( expression )
+  if (is_punctuator_token(tok, "(")) {
+    consume_token(parser);
+    parse_expression(parser);
+    consume_punctuator(parser, ")");
+    return;
+  }
+  // TODO: implement generic selection parsing.
+
+  error_tok(tok);
+}
+
 static void parse_postfix_expression(parser* parser) {
   // TODO: handle compound struct literal ( type-name ) { initializer-list }
 
-  consume_primary_expression(parser);
+  parse_primary_expression(parser);
   while (has_token(parser)) {
     token* tok = peek_token(parser);
     // postfix-expression [ expression ]
