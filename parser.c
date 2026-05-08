@@ -8,6 +8,8 @@
 #include "errors.h"
 #include "lexer.h"
 
+//! Returns true if `tok`'s string representation matches `expected`. Otherwise
+//! returns false.
 static bool is_token_string_match(token* tok, const char* expected) {
   size_t len = strlen(expected);
   if (len != tok->size) {
