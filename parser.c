@@ -158,7 +158,6 @@ static ast_node* parse_primary_expression(parser* parser) {
 
   // ( expression )
   if (is_punctuator_token(tok, "(")) {
-    // TODO: Fix this
     consume_token(parser);
     ast_node* node = parse_expression(parser);
     consume_punctuator(parser, ")");
@@ -180,8 +179,7 @@ static ast_operator* create_ast_operator(token* tok,
   return op;
 }
 
-static ast_node* parse_postfix_operator(parser* parser) {
-  token* tok = peek_token(parser);
+static ast_node* parse_postfix_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;
   }
@@ -239,7 +237,7 @@ static ast_node* parse_postfix_expression(parser* parser) {
 
     // postfix-expression ++
     // postfix-expression --
-    ast_node* new_node = parse_postfix_operator(parser);
+    ast_node* new_node = parse_postfix_operator(parser, tok);
     if (new_node) {
       new_node->node.expression->lhs = node;
       node = new_node;
@@ -251,8 +249,7 @@ static ast_node* parse_postfix_expression(parser* parser) {
   return node;
 }
 
-static ast_node* parse_prefix_operator(parser* parser) {
-  token* tok = peek_token(parser);
+static ast_node* parse_prefix_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;
   }
@@ -273,8 +270,7 @@ static ast_node* parse_prefix_operator(parser* parser) {
   return NULL;
 }
 
-static ast_node* parse_unary_operator(parser* parser) {
-  token* tok = peek_token(parser);
+static ast_node* parse_unary_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;
   }
@@ -304,23 +300,24 @@ static ast_node* parse_unary_operator(parser* parser) {
 }
 
 static ast_node* parse_unary_expression(parser* parser) {
-  ast_node* node = parse_prefix_operator(parser);
+  token* tok = peek_token(parser);
+  ast_node* node = parse_prefix_operator(parser, tok);
   if (node) {
     ast_node* lhs = parse_unary_expression(parser);
     node->node.expression->lhs = lhs;
     return node;
   }
 
-  node = parse_unary_operator(parser);
+  node = parse_unary_operator(parser, tok);
   if (node) {
     ast_node* lhs = parse_cast_expression(parser);
     node->node.expression->lhs = lhs;
     return node;
   }
 
-  token* tok = peek_token(parser);
   if (is_keyword_token(tok, "sizeof")) {
     consume_token(parser);
+    tok = peek_token(parser);
     if (is_punctuator_token(tok, "(")) {
       consume_token(parser);
       parse_type_name(parser);
@@ -331,8 +328,7 @@ static ast_node* parse_unary_expression(parser* parser) {
   }
   // TODO: Handle _Alignof
 
-  node = parse_postfix_expression(parser);
-  return node;
+  return parse_postfix_expression(parser);
 }
 
 static ast_node* parse_expression(parser* parser) {
