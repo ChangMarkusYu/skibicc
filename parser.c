@@ -95,7 +95,7 @@ static void consume_any_identifier(parser* parser) {
 
 // Forward declarations.
 static ast_node* parse_unary_expression(parser*);
-static ast_node* parse_expression(parser*);
+ast_node* parse_expression(parser*);
 
 static void parse_type_name(parser* parser) {
   // TODO: Implement this.
@@ -367,7 +367,7 @@ static ast_node* parse_unary_expression(parser* parser) {
   return parse_postfix_expression(parser);
 }
 
-static ast_node* parse_expression(parser* parser) {
+ast_node* parse_expression(parser* parser) {
   return parse_unary_expression(parser);
 }
 

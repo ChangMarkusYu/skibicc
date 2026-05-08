@@ -86,4 +86,6 @@ typedef struct parser {
 
 void parse(array* tokens);
 
+ast_node* parse_expression(parser* parser);
+
 #endif  // SKIBICC_PARSER_H
