@@ -18,6 +18,8 @@ static bool is_token_string_match(token* tok, const char* expected) {
   return true;
 }
 
+//! Returns true if `tok` is a punctuator token with string representation
+//! `expected`.
 static bool is_punctuator_token(token* tok, const char* expected) {
   if (tok->token_type != TK_PUNCT) {
     return false;
@@ -25,6 +27,8 @@ static bool is_punctuator_token(token* tok, const char* expected) {
   return is_token_string_match(tok, expected);
 }
 
+//! Returns true if `tok` is a keyword token with string representation
+//! `expected`.
 static bool is_keyword_token(token* tok, const char* expected) {
   if (tok->token_type != TK_KEYWRD) {
     return false;
@@ -32,16 +36,22 @@ static bool is_keyword_token(token* tok, const char* expected) {
   return is_token_string_match(tok, expected);
 }
 
+//! Returns the current token the cursor is pointing to.
 static token* peek_token(parser* parser) {
   return array_at(parser->tokens, parser->cur);
 }
 
+//! Consumes the current token. Moves the cursor to the next token.
 static inline void consume_token(parser* parser) { parser->cur++; }
 
+//! Returns true if there are still unconumed tokens. Otherwise returns false.
 static inline bool has_token(parser* parser) {
   return parser->cur < parser->tokens->size;
 }
 
+//! Emits an error message and exits if `actual` token does not have the
+//! `expected_type` or does not have a string representation that is
+//! `expecte_tok`.
 static void check_token(token* actual, token_type expected_type,
                         const char* expecte_tok) {
   if (actual->token_type != expected_type ||
@@ -50,12 +60,16 @@ static void check_token(token* actual, token_type expected_type,
   }
 }
 
+//! Consumes the current token if it is a keyword token. Otherwise emits an
+//! error message and exits.
 static void consume_keyword(parser* parser, const char* expecte_tok) {
   token* tok = peek_token(parser);
   check_token(tok, TK_KEYWRD, expecte_tok);
   consume_token(parser);
 }
 
+//! Consumes the current token if it is a punctuator token. Otherwise emits an
+//! error message and exits.
 static void consume_punctuator(parser* parser, const char* expecte_tok) {
   token* tok = peek_token(parser);
   check_token(tok, TK_PUNCT, expecte_tok);
@@ -87,6 +101,7 @@ static void parse_type_name(parser* parser) {
   // TODO: Implement this.
 }
 
+// Incomplete. Right now just delegates to parse_unary_expression.
 static ast_node* parse_cast_expression(parser* parser) {
   token* tok = peek_token(parser);
   if (is_punctuator_token(tok, "(")) {
@@ -98,6 +113,7 @@ static ast_node* parse_cast_expression(parser* parser) {
   return parse_unary_expression(parser);
 }
 
+//! Retruns an expression AST node.
 static ast_node* create_ast_expression(void) {
   ast_node* node = calloc(sizeof(ast_node), /*__size=*/1);
   if (!node) {
@@ -112,6 +128,7 @@ static ast_node* create_ast_expression(void) {
   return node;
 }
 
+//! Retruns a constant AST node.
 static ast_node* create_ast_constant(token* tok) {
   ast_node* node = calloc(sizeof(ast_node), /*__size=*/1);
   if (!node) {
@@ -127,6 +144,7 @@ static ast_node* create_ast_constant(token* tok) {
   return node;
 }
 
+//! Retruns a variable AST node.
 static ast_node* create_ast_variable(token* tok) {
   ast_node* node = calloc(sizeof(ast_node), /*__size=*/1);
   if (!node) {
@@ -142,6 +160,14 @@ static ast_node* create_ast_variable(token* tok) {
   return node;
 }
 
+//! Parses a primary expression and returns an AST node representing it. A
+//! primary expression is one of the following:
+//!
+//! - constant or string literal. Returns a constant AST node.
+//! - identifier. Returns a variable AST node.
+//! - ( expression ). Returns an expression AST node.
+//!
+//! Returns NULL no primary expression can be parsed.
 static ast_node* parse_primary_expression(parser* parser) {
   token* tok = peek_token(parser);
   token_type tok_type = tok->token_type;
@@ -168,6 +194,7 @@ static ast_node* parse_primary_expression(parser* parser) {
   return NULL;
 }
 
+//! Returns an operator AST node of `op_type` from `tok`.
 static ast_operator* create_ast_operator(token* tok,
                                          ast_operator_type op_type) {
   ast_operator* op = calloc(sizeof(ast_operator), /*__size=*/1);
@@ -179,6 +206,9 @@ static ast_operator* create_ast_operator(token* tok,
   return op;
 }
 
+//! Parses a postfix operator from `tok`. If successful, consumes `tok` and
+//! returns an expression AST node containing the operator. Returns NULL if no
+//! postfix operator can be parsed from `tok`.
 static ast_node* parse_postfix_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;
@@ -249,6 +279,9 @@ static ast_node* parse_postfix_expression(parser* parser) {
   return node;
 }
 
+//! Parses a prefix operator from `tok`. If successful, consumes `tok` and
+//! returns an expression AST node containing the operator. Returns NULL if no
+//! prefix operator can be parsed from `tok`.
 static ast_node* parse_prefix_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;
@@ -270,6 +303,9 @@ static ast_node* parse_prefix_operator(parser* parser, token* tok) {
   return NULL;
 }
 
+//! Parses an unary operator from `tok` and returns an expression AST node
+//! containing the operator. Returns NULL if no unary operator can be parsed
+//! from `tok`.
 static ast_node* parse_unary_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;
