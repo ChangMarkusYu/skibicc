@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -97,17 +98,16 @@ static void consume_any_identifier(parser* parser) {
 static ast_node* parse_unary_expression(parser*);
 ast_node* parse_expression(parser*);
 
-static void parse_type_name(parser* parser) {
-  // TODO: Implement this.
+static ast_node* parse_type_name(parser* parser) {
+  // TODO: Implement this. Probably need to look ahead tokens without consuming
+  // them.
+  return NULL;
 }
 
 // Incomplete. Right now just delegates to parse_unary_expression.
 static ast_node* parse_cast_expression(parser* parser) {
   token* tok = peek_token(parser);
-  if (is_punctuator_token(tok, "(")) {
-    consume_token(parser);
-    parse_type_name(parser);
-    consume_punctuator(parser, ")");
+  if (is_punctuator_token(tok, "(") && parse_type_name(parser)) {
     return parse_cast_expression(parser);
   }
   return parse_unary_expression(parser);
@@ -303,9 +303,9 @@ static ast_node* parse_prefix_operator(parser* parser, token* tok) {
   return NULL;
 }
 
-//! Parses an unary operator from `tok` and returns an expression AST node
-//! containing the operator. Returns NULL if no unary operator can be parsed
-//! from `tok`.
+//! Parses an unary operator from `tok`. If successful, consumes `tok` and
+//! returns an expression AST node containing the operator. Returns NULL if no
+//! unary operator can be parsed from `tok`.
 static ast_node* parse_unary_operator(parser* parser, token* tok) {
   if (tok->token_type != TK_PUNCT) {
     return NULL;

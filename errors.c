@@ -42,5 +42,7 @@ void error_tok_fmt(token* tok, char* fmt, ...) {
   fprintf(stderr, " ");
   va_list args;
   va_start(args, fmt);
-  error(fmt, args);
+  vfprintf(stderr, fmt, args);
+  fprintf(stderr, "\n");
+  exit(1);
 }

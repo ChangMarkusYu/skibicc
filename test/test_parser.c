@@ -15,7 +15,7 @@ void test_parser_basic(void) {
 }
 
 void test_parser_unary_expression(void) {
-  char text[] = "++ + - &foo++--";
+  char text[] = "++ + - (&foo)++--";
   array tokens = lex(text);
   parser parser;
   parser.cur = 0;
@@ -37,15 +37,15 @@ void test_parser_unary_expression(void) {
 
   ast = ast->node.expression->lhs;
   TEST_ASSERT_EQUAL(AST_EXPR, ast->node_type);
-  TEST_ASSERT_EQUAL(OP_ADDROF, ast->node.expression->op->op_type);
-
-  ast = ast->node.expression->lhs;
-  TEST_ASSERT_EQUAL(AST_EXPR, ast->node_type);
   TEST_ASSERT_EQUAL(OP_POSTDEC, ast->node.expression->op->op_type);
 
   ast = ast->node.expression->lhs;
   TEST_ASSERT_EQUAL(AST_EXPR, ast->node_type);
   TEST_ASSERT_EQUAL(OP_POSTINC, ast->node.expression->op->op_type);
+
+  ast = ast->node.expression->lhs;
+  TEST_ASSERT_EQUAL(AST_EXPR, ast->node_type);
+  TEST_ASSERT_EQUAL(OP_ADDROF, ast->node.expression->op->op_type);
 
   ast = ast->node.expression->lhs;
   TEST_ASSERT_EQUAL(AST_VAR, ast->node_type);
