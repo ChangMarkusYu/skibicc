@@ -39,6 +39,7 @@ void* array_push_back(array* arr) {
     arr->buf = buf;
   }
   void* res = array_at(arr, arr->size);
+  memset(res, 0, arr->item_size);
   arr->size += 1;
   return res;
 }

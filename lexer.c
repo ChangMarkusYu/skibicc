@@ -756,7 +756,6 @@ array lex(const char* s) {
     }
 
     token* tok = array_push_back(&tokens);
-    memset(tok, 0, sizeof(token));
     tok->token_type = TK_UNKNOWN;
     tok->line_num = line_num;
     tok->col_num = col_num;
@@ -790,10 +789,19 @@ array lex(const char* s) {
 
   // Inserts an EOF token at the end.
   token* tok = array_push_back(&tokens);
-  memset(tok, 0, sizeof(token));
   tok->token_type = TK_EOF;
   tok->loc = "EOF";
   tok->line_num = line_num;
   tok->col_num = col_num;
   return tokens;
+}
+
+void destroy_tokens(array* tokens) {
+  for (size_t i = 0; i < tokens->size; ++i) {
+    token* tok = array_at(tokens, i);
+    if (tok->token_type == TK_STRLIT) {
+      free(tok->constant.str_val);
+    }
+  }
+  array_destroy(tokens);
 }

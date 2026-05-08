@@ -115,12 +115,12 @@ static ast_node* parse_cast_expression(parser* parser) {
 
 //! Retruns an expression AST node.
 static ast_node* create_ast_expression(void) {
-  ast_node* node = calloc(sizeof(ast_node), /*__size=*/1);
+  ast_node* node = calloc(1, sizeof(ast_node));
   if (!node) {
     error("FATAL: create_ast_expression(): calloc() failed.");
   }
   node->node_type = AST_EXPR;
-  ast_expression* expression = calloc(sizeof(ast_expression), /*__size=*/1);
+  ast_expression* expression = calloc(1, sizeof(ast_expression));
   if (!expression) {
     error("FATAL: create_ast_expression(): calloc() failed.");
   }
@@ -130,12 +130,12 @@ static ast_node* create_ast_expression(void) {
 
 //! Retruns a constant AST node.
 static ast_node* create_ast_constant(token* tok) {
-  ast_node* node = calloc(sizeof(ast_node), /*__size=*/1);
+  ast_node* node = calloc(1, sizeof(ast_node));
   if (!node) {
     error("FATAL: create_ast_constant(): calloc() failed.");
   }
   node->node_type = AST_CONST;
-  ast_constant* constant = calloc(sizeof(ast_constant), /*__size=*/1);
+  ast_constant* constant = calloc(1, sizeof(ast_constant));
   if (!constant) {
     error("FATAL: create_ast_constant(): calloc() failed.");
   }
@@ -146,12 +146,12 @@ static ast_node* create_ast_constant(token* tok) {
 
 //! Retruns a variable AST node.
 static ast_node* create_ast_variable(token* tok) {
-  ast_node* node = calloc(sizeof(ast_node), /*__size=*/1);
+  ast_node* node = calloc(1, sizeof(ast_node));
   if (!node) {
     error("FATAL: create_ast_variable(): calloc() failed.");
   }
   node->node_type = AST_VAR;
-  ast_variable* variable = calloc(sizeof(ast_variable), /*__size=*/1);
+  ast_variable* variable = calloc(1, sizeof(ast_variable));
   if (!variable) {
     error("FATAL: create_ast_variable(): calloc() failed.");
   }
@@ -197,7 +197,7 @@ static ast_node* parse_primary_expression(parser* parser) {
 //! Returns an operator AST node of `op_type` from `tok`.
 static ast_operator* create_ast_operator(token* tok,
                                          ast_operator_type op_type) {
-  ast_operator* op = calloc(sizeof(ast_operator), /*__size=*/1);
+  ast_operator* op = calloc(1, sizeof(ast_operator));
   if (!op) {
     error("FATAL: create_ast_operator(): malloc() failed.");
   }

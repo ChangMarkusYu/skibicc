@@ -61,6 +61,10 @@ char* read_file(char* path);
 //! Given a source code buffer `s`, returns an array of tokens.
 array lex(const char* s);
 
+//! Frees all objects and memory related to `tokens`. The user is responsible
+//! for freeing the array object itself.
+void destroy_tokens(array* tokens);
+
 // ------------ Exposed for testing only ------------
 
 //! Returns true if there is an identifier token starting at the character
@@ -106,7 +110,5 @@ bool lex_char_literal(const char* s, token* tok);
 //! - Unsupported escape sequences will get translated into the character after
 //! the slash, so for example given '\o', it is translated into 'o'.
 bool lex_string_literal(const char* s, token* tok);
-
-array lex(const char* s);
 
 #endif  // SKIBICC_LEXER_H

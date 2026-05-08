@@ -10,7 +10,7 @@ void setUp(void) {}
 void tearDown(void) {}
 
 void add_token(array* tokens, token_type type) {
-  token* dst = (token*)array_push_back(tokens);
+  token* dst = array_push_back(tokens);
   dst->token_type = type;
 }
 
@@ -92,8 +92,8 @@ void test_lexer_basic(void) {
   TEST_ASSERT_EQUAL(TK_EOF, actual_token->token_type);
 
   free(buf);
-  array_destroy(&tokens);
-  array_destroy(&expected_tokens);
+  destroy_tokens(&tokens);
+  destroy_tokens(&expected_tokens);
 }
 
 void test_lexer_bootstrap(void) {
@@ -102,7 +102,7 @@ void test_lexer_bootstrap(void) {
   TEST_ASSERT_TRUE(buf);
   array tokens = lex(buf);
   free(buf);
-  array_destroy(&tokens);
+  destroy_tokens(&tokens);
 }
 
 int main(void) {
