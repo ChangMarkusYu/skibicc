@@ -1,5 +1,6 @@
 #include "../lexer.h"
 #include "../parser.h"
+#include "../prettyprint.h"
 #include "../unity/unity.h"
 #include "array.h"
 
@@ -22,6 +23,7 @@ void test_parser_unary_expression(void) {
   parser.tokens = &tokens;
   parser.ast = NULL;
   ast_node* ast = parse_expression(&parser);
+  prettyprint(ast);
   destroy_tokens(&tokens);
 
   TEST_ASSERT_EQUAL(AST_EXPR, ast->node_type);

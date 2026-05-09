@@ -8,6 +8,10 @@
 #include "errors.h"
 #include "lexer.h"
 
+// Forward declarations.
+static ast_node* parse_unary_expression(parser*);
+ast_node* parse_expression(parser*);
+
 //! Returns true if `tok`'s string representation matches `expected`. Otherwise
 //! returns false.
 static bool is_token_string_match(token* tok, const char* expected) {
@@ -95,10 +99,6 @@ static void consume_any_identifier(parser* parser) {
   }
   consume_token(parser);
 }
-
-// Forward declarations.
-static ast_node* parse_unary_expression(parser*);
-ast_node* parse_expression(parser*);
 
 static ast_node* parse_type_name(parser* parser) {
   // TODO: Implement this. Probably need to look ahead tokens without consuming

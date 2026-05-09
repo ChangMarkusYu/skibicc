@@ -1,4 +1,5 @@
 #ifndef SKIBICC_PARSER_H
+#define SKIBICC_PARSER_H
 
 #include "array.h"
 #include "lexer.h"
@@ -8,10 +9,6 @@ typedef enum ast_node_type {
   AST_EXPR,
   AST_VAR,
   AST_CONST,
-  AST_STMNT,
-  AST_FUNCDEF,
-  AST_RETURN,
-  AST_SEMICOL,
 } ast_node_type;
 
 typedef struct ast_node ast_node;
