@@ -373,15 +373,33 @@ ast_node* parse_expression(parser* parser) {
   return parse_unary_expression(parser);
 }
 
-static void parse_statement(parser* parser) {
-  consume_keyword(parser, "return");
-
-  parse_expression(parser);
-
-  consume_punctuator(parser, ";");
+static ast_node* create_statement(ast_node_type node_type) {
+  ast_node* node = calloc(/*__nmemb=*/1, sizeof(ast_node));
+  if (!node) {
+    error("FATAL: create_statement(): calloc() failed");
+  }
+  node->node_type = node_type;
+  ast_statement* statement = calloc(1, sizeof(ast_statement));
+  if (!statement) {
+    error("FATAL: create_statement(): calloc() failed");
+  }
+  node->node.statement = statement;
+  return node;
 }
 
-static void parse_function_definition(parser* parser) {
+static ast_node* parse_statement(parser* parser) {
+  consume_keyword(parser, "return");
+
+  ast_node* expression = parse_expression(parser);
+
+  consume_punctuator(parser, ";");
+
+  ast_node* node = create_statement(AST_RETSTMNT);
+  node->node.statement->expression = expression;
+  return node;
+}
+
+static ast_node* parse_function_definition(parser* parser) {
   consume_keyword(parser, "int");
   consume_any_identifier(parser);
 
@@ -390,16 +408,16 @@ static void parse_function_definition(parser* parser) {
   consume_punctuator(parser, ")");
 
   consume_punctuator(parser, "{");
-  parse_statement(parser);
+  ast_node* node = parse_statement(parser);
   consume_punctuator(parser, "}");
+  return node;
 }
 
-void parse(array* tokens) {
+ast_node* parse(array* tokens) {
   parser parser;
   parser.cur = 0;
   parser.tokens = tokens;
   parser.ast = NULL;
 
-  parse_function_definition(&parser);
-  return;
+  return parse_function_definition(&parser);
 }

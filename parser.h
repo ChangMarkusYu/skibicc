@@ -9,6 +9,7 @@ typedef enum ast_node_type {
   AST_EXPR,
   AST_VAR,
   AST_CONST,
+  AST_RETSTMNT,
 } ast_node_type;
 
 typedef struct ast_node ast_node;
@@ -81,7 +82,7 @@ typedef struct parser {
   ast_node* ast;
 } parser;
 
-void parse(array* tokens);
+ast_node* parse(array* tokens);
 
 ast_node* parse_expression(parser* parser);
 
