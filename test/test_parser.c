@@ -16,16 +16,15 @@ void test_parser_basic(void) {
 }
 
 void test_parser_unary_expression(void) {
-  char text[] = "++ + - (&foo)++--";
+  char text[] = "int main(void){ return ++ + - (&foo)++--;}";
   array tokens = lex(text);
-  parser parser;
-  parser.cur = 0;
-  parser.tokens = &tokens;
-  parser.ast = NULL;
-  ast_node* ast = parse_expression(&parser);
+  ast_node* ast = parse(&tokens);
   prettyprint(ast);
   destroy_tokens(&tokens);
 
+  TEST_ASSERT_EQUAL(AST_RETSTMNT, ast->node_type);
+
+  ast = ast->node.statement->expression;
   TEST_ASSERT_EQUAL(AST_EXPR, ast->node_type);
   TEST_ASSERT_EQUAL(OP_PREINC, ast->node.expression->op->op_type);
 

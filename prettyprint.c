@@ -61,6 +61,16 @@ static void print_expression(ast_node* ast, size_t depth) {
   printf(")\n");
 }
 
+static void prettyprint_return_statement(ast_node* node, size_t depth) {
+  print_tabs(depth);
+  printf("(Return: \n");
+
+  prettyprint_internal(node->node.statement->expression, depth + 1);
+
+  print_tabs(depth);
+  printf(")\n");
+}
+
 //! Helper method that implements the actual meat of the prettyprint function.
 //! Prints the `ast` node. `depth` is the node's depth within the entire AST.
 static void prettyprint_internal(ast_node* ast, size_t depth) {
@@ -68,6 +78,9 @@ static void prettyprint_internal(ast_node* ast, size_t depth) {
     case AST_UNKNOWN:
       print_tabs(depth);
       printf("(Unknown)\n");
+      break;
+    case AST_RETSTMNT:
+      prettyprint_return_statement(ast, depth);
       break;
     case AST_EXPR:
       print_expression(ast, depth);
