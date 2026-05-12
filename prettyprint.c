@@ -61,6 +61,7 @@ static void print_expression(ast_node* ast, size_t depth) {
   printf(")\n");
 }
 
+// TODO: Temporary. AST_RETSTMNT is probably going away soon.
 static void prettyprint_return_statement(ast_node* node, size_t depth) {
   print_tabs(depth);
   printf("(Return: \n");

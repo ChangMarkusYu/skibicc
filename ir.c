@@ -1,59 +1,25 @@
+#include "ir.h"
+
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "array.h"
 #include "errors.h"
 #include "parser.h"
 
-typedef struct ir_val {
-  bool is_constant;
-  union {
-    const char* var_name;
-    ast_node* constant;
-  } val;
-} ir_val;
-
-typedef enum ir_instruction_type {
-  INST_RETURN,
-  INST_ARITH,
-} ir_instruction_type;
-
-typedef struct ir_instruction {
-  ir_instruction_type instruction_type;
-  ast_operator* op;
-  // Populated if unary or binary `op`.
-  ir_val* lhs;
-  // Populated if binary `op`.
-  ir_val* rhs;
-  // Destination operand. NULL if not applicable to the instruction type.
-  ir_val* dst;
-} ir_instruction;
-
-typedef struct ir_func_def {
-  const char* name;
-  array* instructions;
-} ir_func_def;
-
-struct ir_node;
-typedef struct ir_node {
-  ir_func_def* function_definition;
-  struct ir_node* next;
-} ir_node;
-
 const uint64_t MAX_NAME_SIZE = 32;
 
-static uint64_t counter = 0;
+static uint64_t COUNT = 0;
 
 static const char* generate_name(void) {
   char* name = malloc(MAX_NAME_SIZE);
   if (!name) {
     error("generate_name(): malloc() failed");
   }
-  ++counter;
+  ++COUNT;
   // Names are formatted like 1_, 2_, 3_,...
-  snprintf(name, MAX_NAME_SIZE, "%" PRIu64 "_", counter);
+  snprintf(name, MAX_NAME_SIZE, "%" PRIu64 "_", COUNT);
   return name;
 }
 
@@ -118,6 +84,7 @@ static ir_node* create_ir_node(void) {
 
 ir_node* emit_ir(ast_node* ast) {
   ir_node* ir = create_ir_node();
+  // TODO: hard coded for now. Implement later.
   ir->function_definition->name = "main";
   emit_ir_instruction(ast, ir->function_definition->instructions);
   return ir;

@@ -1,0 +1,43 @@
+#ifndef SKIBICC_IR_H
+#define SKIBICC_IR_H
+
+#include <stdbool.h>
+
+#include "parser.h"
+
+typedef struct ir_val {
+  bool is_constant;
+  union {
+    const char* var_name;
+    ast_node* constant;
+  } val;
+} ir_val;
+
+typedef enum ir_instruction_type {
+  INST_RETURN,
+  INST_ARITH,
+} ir_instruction_type;
+
+typedef struct ir_instruction {
+  ir_instruction_type instruction_type;
+  ast_operator* op;
+  // Populated if unary or binary `op`.
+  ir_val* lhs;
+  // Populated if binary `op`.
+  ir_val* rhs;
+  // Destination operand. NULL if not applicable to the instruction type.
+  ir_val* dst;
+} ir_instruction;
+
+typedef struct ir_func_def {
+  const char* name;
+  array* instructions;
+} ir_func_def;
+
+struct ir_node;
+typedef struct ir_node {
+  ir_func_def* function_definition;
+  struct ir_node* next;
+} ir_node;
+
+#endif  // SKIBICC_IR_H
