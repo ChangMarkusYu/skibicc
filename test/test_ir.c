@@ -4,6 +4,7 @@
 #include "../ir.h"
 #include "../lexer.h"
 #include "../parser.h"
+#include "../prettyprint.h"
 #include "../unity/unity.h"
 
 void setUp(void) {}
@@ -15,6 +16,7 @@ void test_ir_basic(void) {
   array tokens = lex(text);
   ast_node* ast = parse(&tokens);
   ir_node* ir = emit_ir(ast);
+  prettyprint_ir(ir);
 
   const char* name = ir->function_definition->name;
   TEST_ASSERT_EQUAL_STRING("main", name);
@@ -38,6 +40,9 @@ void test_ir_basic(void) {
 
   inst = array_at(instructions, 1);
   TEST_ASSERT_EQUAL(INST_RETURN, inst->instruction_type);
+  TEST_ASSERT_EQUAL_STRING("1_", inst->lhs->val.var_name);
+
+  destroy_tokens(&tokens);
 }
 
 int main(void) {

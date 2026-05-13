@@ -64,9 +64,11 @@ ir_val* emit_ir_instruction(ast_node* node, array* instructions) {
   }
 
   if (node->node_type == AST_RETSTMNT) {
-    emit_ir_instruction(node->node.statement->expression, instructions);
+    ir_val* lhs =
+        emit_ir_instruction(node->node.statement->expression, instructions);
     ir_instruction* inst = array_push_back(instructions);
     inst->instruction_type = INST_RETURN;
+    inst->lhs = lhs;
     return NULL;
   }
 
