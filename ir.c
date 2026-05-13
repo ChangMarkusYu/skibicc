@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "array.h"
 #include "errors.h"
 #include "parser.h"
 
@@ -73,12 +74,26 @@ ir_val* emit_ir_instruction(ast_node* node, array* instructions) {
   return NULL;
 }
 
+static ir_func_def* create_ir_func_def(void) {
+  ir_func_def* func_def = calloc(/*__nmemb=*/1, sizeof(ir_func_def));
+  if (!func_def) {
+    error("FATAL: create_ir_node(): calloc() failed.");
+  }
+  func_def->instructions = malloc(sizeof(array));
+  if (!func_def->instructions) {
+    error("FATAL: create_ir_node(): malloc() failed.");
+  }
+  array_init(func_def->instructions, sizeof(ir_instruction));
+  return func_def;
+}
+
 static ir_node* create_ir_node(void) {
   ir_node* node = calloc(/*__nmemb=*/1, sizeof(ir_node));
   if (!node) {
-    error("FATAL: create_ir_node(): calloc failed.");
+    error("FATAL: create_ir_node(): calloc() failed.");
   }
-  node->function_definition = calloc(/*__nmemb=*/1, sizeof(ir_func_def));
+  node->function_definition = create_ir_func_def();
+  node->next = NULL;
   return node;
 }
 

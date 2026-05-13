@@ -40,4 +40,6 @@ typedef struct ir_node {
   struct ir_node* next;
 } ir_node;
 
+ir_node* emit_ir(ast_node* ast);
+
 #endif  // SKIBICC_IR_H

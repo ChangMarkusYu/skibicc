@@ -1,8 +1,8 @@
+#include "../array.h"
 #include "../lexer.h"
 #include "../parser.h"
 #include "../prettyprint.h"
 #include "../unity/unity.h"
-#include "array.h"
 
 void setUp(void) {}
 
