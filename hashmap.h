@@ -8,14 +8,14 @@
 #include <stddef.h>
 
 //! Represents the <key, value> pairs inside a `hashmap`. `key` and `data`
-//! may refer to either heap or stack memory. Do NOT use `hashmap_destroy()`
-//! if `key` or `data` refers to stack memory.
+//! may refer to either heap or static memory. Do NOT use `hashmap_destroy()`
+//! if `key` or `data` refers to static memory.
 typedef struct hashmap_entry {
-  //! Key of the entry. May point to either stack or head memory.
+  //! Key of the entry. May point to either static or heap memory.
   void* key;
   //! Size of `key` in bytes.
   size_t key_size;
-  //! Value of the entry. May point to either stack or heap memory.
+  //! Value of the entry. May point to either static or heap memory.
   void* data;
   //! Size of `data` in bytes.
   size_t data_size;

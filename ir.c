@@ -56,7 +56,7 @@ ir_val* emit_ir_instruction(ast_node* node, array* instructions) {
     // Only unary ops for now. Only recurse on lhs.
     ir_val* lhs = emit_ir_instruction(node->node.expression->lhs, instructions);
     ir_instruction* inst = array_push_back(instructions);
-    inst->instruction_type = INST_ARITH;
+    inst->instruction_type = IR_ARITH;
     inst->op = node->node.expression->op;
     inst->lhs = lhs;
     inst->dst = create_ir_val_var();
@@ -67,7 +67,7 @@ ir_val* emit_ir_instruction(ast_node* node, array* instructions) {
     ir_val* lhs =
         emit_ir_instruction(node->node.statement->expression, instructions);
     ir_instruction* inst = array_push_back(instructions);
-    inst->instruction_type = INST_RETURN;
+    inst->instruction_type = IR_RETURN;
     inst->lhs = lhs;
     return NULL;
   }

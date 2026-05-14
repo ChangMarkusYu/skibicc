@@ -14,8 +14,8 @@ typedef struct ir_val {
 } ir_val;
 
 typedef enum ir_instruction_type {
-  INST_RETURN,
-  INST_ARITH,
+  IR_RETURN,
+  IR_ARITH,
 } ir_instruction_type;
 
 typedef struct ir_instruction {

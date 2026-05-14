@@ -46,6 +46,8 @@ void test_hashmap_simple(void) {
   TEST_ASSERT_EQUAL(0, entry.key_size);
   TEST_ASSERT_EQUAL(0, entry.data);
   TEST_ASSERT_EQUAL(0, entry.data_size);
+
+  hashmap_destroy(&map);
 }
 
 void test_hashmap_stress(void) {
