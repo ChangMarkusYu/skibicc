@@ -25,7 +25,7 @@ void test_ir_basic(void) {
   TEST_ASSERT_EQUAL(2, instructions->size);
 
   ir_instruction* inst = array_at(instructions, 0);
-  TEST_ASSERT_EQUAL(INST_ARITH, inst->instruction_type);
+  TEST_ASSERT_EQUAL(IR_ARITH, inst->instruction_type);
   TEST_ASSERT_EQUAL(OP_NEG, inst->op->op_type);
 
   TEST_ASSERT_EQUAL(true, inst->lhs->is_constant);
@@ -39,7 +39,7 @@ void test_ir_basic(void) {
   TEST_ASSERT_EQUAL_STRING("1_", inst->dst->val.var_name);
 
   inst = array_at(instructions, 1);
-  TEST_ASSERT_EQUAL(INST_RETURN, inst->instruction_type);
+  TEST_ASSERT_EQUAL(IR_RETURN, inst->instruction_type);
   TEST_ASSERT_EQUAL_STRING("1_", inst->lhs->val.var_name);
 
   destroy_tokens(&tokens);
