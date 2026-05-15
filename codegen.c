@@ -6,6 +6,7 @@
 #include "errors.h"
 #include "hashmap.h"
 #include "ir.h"
+#include "list.h"
 
 typedef enum asm_operand_type {
   ASM_OPND_IMM,
@@ -39,7 +40,7 @@ typedef struct asm_instruction {
 
 typedef struct asm_func_def {
   const char* name;
-  array* instructions;
+  list* instructions;
 } asm_func_def;
 
 struct asm_node;
@@ -58,6 +59,10 @@ static void stack_allocator_init(stack_allocator* alloc) {
   alloc->offset = 0;
 }
 
+static inline bool stack_allocator_has_offset(stack_allocator* alloc) {
+  return alloc->offset < 0;
+}
+
 static asm_operad* stack_allocator_get(stack_allocator* alloc, ir_val* val,
                                        int64_t offset) {
   asm_operad* opnd = calloc(/*__nmemb=*/1, sizeof(asm_operad));
@@ -65,7 +70,7 @@ static asm_operad* stack_allocator_get(stack_allocator* alloc, ir_val* val,
     error("FATAL: stack_allocator_get(): calloc() failed.");
   }
   opnd->operand_type = ASM_OPND_STACK;
-  // TODO: strlen is expensive here. Write a string class.
+  // TODO: strlen is expensive here. Should be precomputed by `var_name`.
   size_t name_len = strlen(val->val.var_name);
   hashmap_entry* entry =
       hashmap_get(&alloc->var_to_offset, val->val.var_name, name_len);
@@ -95,13 +100,38 @@ static void stack_allocator_destroy(stack_allocator* alloc) {
   hashmap_destroy(&alloc->var_to_offset);
 }
 
-static asm_func_def* lower_func_def(ir_func_def* ir_func_def) {
-  asm_func_def* asm_func_def = NULL;
+static void insert_allocate_stack_instruction(stack_allocator* alloc,
+                                              list* instructions) {
+  if (!stack_allocator_has_offset(alloc)) {
+    return;
+  }
+
+  asm_instruction* inst = calloc(/*__nmemb=*/1, sizeof(asm_instruction));
+  if (!inst) {
+    error("FATAL: insert_allocate_stack_instruction(): calloc() failed");
+  }
+  inst->instruction_type = ASM_ALLOCSTACK;
+  inst->lhs->operand_type = ASM_OPND_IMM;
+  inst->lhs->operand.immediate = alloc->offset;
+  list_push_front(instructions, inst);
+}
+
+static asm_func_def* lower_asm_func_def(ir_func_def* ir_func_def) {
+  asm_func_def* func_def = calloc(1, sizeof(asm_func_def));
+  if (!func_def) {
+    error("FATAL: create_asm_func_def(): calloc() failed");
+  }
+  func_def->name = ir_func_def->name;
+
+  list* instructions = list_init();
+  func_def->instructions = instructions;
+
   stack_allocator alloc;
   stack_allocator_init(&alloc);
-
+  // TODO: translate IR vars into stack access instruction.
+  insert_allocate_stack_instruction(&alloc, func_def->instructions);
   stack_allocator_destroy(&alloc);
-  return asm_func_def;
+  return func_def;
 }
 
 asm_node* lower_ir(ir_node* ir) { return NULL; }
