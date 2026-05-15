@@ -10,10 +10,15 @@ typedef struct list_node {
 
 typedef struct list {
   list_node* head;
+  list_node* tail;
   size_t size;
 } list;
 
 list* list_init(void);
+
+list_node* list_push_front(list* lst, void* data);
+
+list_node* list_push_back(list* lst, void* data);
 
 list_node* list_insert(list* lst, list_node* node, void* data);
 
