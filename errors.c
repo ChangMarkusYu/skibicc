@@ -46,3 +46,19 @@ void error_tok_fmt(token* tok, char* fmt, ...) {
   fprintf(stderr, "\n");
   exit(1);
 }
+
+void* malloc_safe(size_t size) {
+  void* ptr = malloc(size);
+  if (!ptr) {
+    error("FATAL: malloc() failed.");
+  }
+  return ptr;
+}
+
+void* calloc_safe(size_t nelem, size_t elsize) {
+  void* ptr = calloc(nelem, elsize);
+  if (!ptr) {
+    error("FATAL: calloc() failed.");
+  }
+  return ptr;
+}

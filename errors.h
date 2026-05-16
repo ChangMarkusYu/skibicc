@@ -15,4 +15,12 @@ void error_tok(token* tok);
 //! Reports an unexpected token error, followed by a message `fmt` and exit.
 void error_tok_fmt(token* tok, char* fmt, ...);
 
+//! Delegates to `malloc`, but if `malloc` returns `NULL`, exits the program
+//! with an error message.
+void* malloc_safe(size_t size);
+
+//! Delegates to `calloc`, but if `calloc` returns `NULL`, exits the program
+//! with an error message.
+void* calloc_safe(size_t nelem, size_t elsize);
+
 #endif  // SKIBICC_ERRORS_H
