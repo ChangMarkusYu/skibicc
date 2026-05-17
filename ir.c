@@ -14,10 +14,7 @@ const uint64_t MAX_NAME_SIZE = 32;
 static uint64_t COUNT = 0;
 
 static const char* generate_name(void) {
-  char* name = malloc(MAX_NAME_SIZE);
-  if (!name) {
-    error("generate_name(): malloc() failed");
-  }
+  char* name = malloc_safe(MAX_NAME_SIZE);
   ++COUNT;
   // Names are formatted like 1_, 2_, 3_,...
   snprintf(name, MAX_NAME_SIZE, "%" PRIu64 "_", COUNT);
@@ -25,20 +22,14 @@ static const char* generate_name(void) {
 }
 
 static ir_val* create_ir_val_var(void) {
-  ir_val* val = calloc(/*__nmemb=*/1, sizeof(ir_val));
-  if (!val) {
-    error("FATAL: create_ir_val_var(): calloc() failed");
-  }
+  ir_val* val = calloc_safe(/*nelem=*/1, sizeof(ir_val));
   val->is_constant = false;
   val->val.var_name = generate_name();
   return val;
 }
 
 static ir_val* create_ir_val_constant(ast_node* node) {
-  ir_val* val = calloc(/*__nmemb=*/1, sizeof(ir_val));
-  if (!val) {
-    error("FATAL: create_ir_val_constant(): calloc() failed");
-  }
+  ir_val* val = calloc_safe(/*nelem=*/1, sizeof(ir_val));
   val->is_constant = true;
   val->val.constant = node;
   return val;
@@ -77,23 +68,14 @@ ir_val* emit_ir_instruction(ast_node* node, array* instructions) {
 }
 
 static ir_func_def* create_ir_func_def(void) {
-  ir_func_def* func_def = calloc(/*__nmemb=*/1, sizeof(ir_func_def));
-  if (!func_def) {
-    error("FATAL: create_ir_node(): calloc() failed.");
-  }
-  func_def->instructions = malloc(sizeof(array));
-  if (!func_def->instructions) {
-    error("FATAL: create_ir_node(): malloc() failed.");
-  }
+  ir_func_def* func_def = calloc_safe(/*nelem=*/1, sizeof(ir_func_def));
+  func_def->instructions = malloc_safe(sizeof(array));
   array_init(func_def->instructions, sizeof(ir_instruction));
   return func_def;
 }
 
 static ir_node* create_ir_node(void) {
-  ir_node* node = calloc(/*__nmemb=*/1, sizeof(ir_node));
-  if (!node) {
-    error("FATAL: create_ir_node(): calloc() failed.");
-  }
+  ir_node* node = calloc_safe(/*nelem=*/1, sizeof(ir_node));
   node->function_definition = create_ir_func_def();
   node->next = NULL;
   return node;

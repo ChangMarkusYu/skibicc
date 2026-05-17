@@ -82,10 +82,7 @@ static bool maybe_probe_and_insert(hashmap* map, const hashmap_entry* entry) {
 static void rehash(hashmap* map) {
   size_t old_capacity = map->capacity;
   map->capacity *= 2;
-  hashmap_entry* arr = calloc(map->capacity, sizeof(hashmap_entry));
-  if (!arr) {
-    error("FATAL: rehash(): calloc() failed.");
-  }
+  hashmap_entry* arr = calloc_safe(map->capacity, sizeof(hashmap_entry));
   // Swap.
   hashmap_entry* tmp = map->arr;
   map->arr = arr;
@@ -100,10 +97,7 @@ static void rehash(hashmap* map) {
 }
 
 void hashmap_init(hashmap* map) {
-  map->arr = calloc(INITIAL_SIZE, sizeof(hashmap_entry));
-  if (!map->arr) {
-    error("FATAL: hashmap_init(): calloc() failed.");
-  }
+  map->arr = calloc_safe(INITIAL_SIZE, sizeof(hashmap_entry));
   map->size = 0;
   map->capacity = INITIAL_SIZE;
 }

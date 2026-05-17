@@ -17,10 +17,7 @@ void array_init(array* arr, size_t item_size) {
   arr->size = 0;
   arr->item_size = item_size;
   arr->capacity = INITIAL_CAPACITY;
-  arr->buf = malloc(item_size * INITIAL_CAPACITY);
-  if (!arr->buf) {
-    error("FATAL: array_init(): calloc() failed.");
-  }
+  arr->buf = malloc_safe(item_size * INITIAL_CAPACITY);
 }
 
 void* array_at(array* arr, size_t index) {
@@ -30,10 +27,7 @@ void* array_at(array* arr, size_t index) {
 void* array_push_back(array* arr) {
   if (arr->size >= arr->capacity) {
     arr->capacity *= 2;
-    void* buf = malloc(arr->item_size * arr->capacity);
-    if (!arr->buf) {
-      error("FATAL: array_push_back(): malloc() failed.");
-    }
+    void* buf = malloc_safe(arr->item_size * arr->capacity);
     memcpy(buf, arr->buf, arr->size * arr->item_size);
     free(arr->buf);
     arr->buf = buf;

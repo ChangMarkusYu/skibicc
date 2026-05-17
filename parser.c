@@ -117,30 +117,18 @@ static ast_node* parse_cast_expression(parser* parser) {
 
 //! Retruns an expression AST node.
 static ast_node* create_ast_expression(void) {
-  ast_node* node = calloc(1, sizeof(ast_node));
-  if (!node) {
-    error("FATAL: create_ast_expression(): calloc() failed.");
-  }
+  ast_node* node = calloc_safe(/*nelem=*/1, sizeof(ast_node));
   node->node_type = AST_EXPR;
-  ast_expression* expression = calloc(1, sizeof(ast_expression));
-  if (!expression) {
-    error("FATAL: create_ast_expression(): calloc() failed.");
-  }
+  ast_expression* expression = calloc_safe(1, sizeof(ast_expression));
   node->node.expression = expression;
   return node;
 }
 
 //! Retruns a constant AST node.
 static ast_node* create_ast_constant(token* tok) {
-  ast_node* node = calloc(1, sizeof(ast_node));
-  if (!node) {
-    error("FATAL: create_ast_constant(): calloc() failed.");
-  }
+  ast_node* node = calloc_safe(/*nelem=*/1, sizeof(ast_node));
   node->node_type = AST_CONST;
-  ast_constant* constant = calloc(1, sizeof(ast_constant));
-  if (!constant) {
-    error("FATAL: create_ast_constant(): calloc() failed.");
-  }
+  ast_constant* constant = calloc_safe(/*nelem=*/1, sizeof(ast_constant));
   constant->tok = tok;
   node->node.consant = constant;
   return node;
@@ -148,15 +136,9 @@ static ast_node* create_ast_constant(token* tok) {
 
 //! Retruns a variable AST node.
 static ast_node* create_ast_variable(token* tok) {
-  ast_node* node = calloc(1, sizeof(ast_node));
-  if (!node) {
-    error("FATAL: create_ast_variable(): calloc() failed.");
-  }
+  ast_node* node = calloc_safe(/*nelem=*/1, sizeof(ast_node));
   node->node_type = AST_VAR;
-  ast_variable* variable = calloc(1, sizeof(ast_variable));
-  if (!variable) {
-    error("FATAL: create_ast_variable(): calloc() failed.");
-  }
+  ast_variable* variable = calloc_safe(/*nelem=*/1, sizeof(ast_variable));
   variable->tok = tok;
   node->node.variable = variable;
   return node;
@@ -199,10 +181,7 @@ static ast_node* parse_primary_expression(parser* parser) {
 //! Returns an operator AST node of `op_type` from `tok`.
 static ast_operator* create_ast_operator(token* tok,
                                          ast_operator_type op_type) {
-  ast_operator* op = calloc(1, sizeof(ast_operator));
-  if (!op) {
-    error("FATAL: create_ast_operator(): malloc() failed.");
-  }
+  ast_operator* op = calloc_safe(/*nelem=*/1, sizeof(ast_operator));
   op->tok = tok;
   op->op_type = op_type;
   return op;
@@ -374,15 +353,9 @@ ast_node* parse_expression(parser* parser) {
 }
 
 static ast_node* create_statement(ast_node_type node_type) {
-  ast_node* node = calloc(/*__nmemb=*/1, sizeof(ast_node));
-  if (!node) {
-    error("FATAL: create_statement(): calloc() failed");
-  }
+  ast_node* node = calloc_safe(/*nelem=*/1, sizeof(ast_node));
   node->node_type = node_type;
-  ast_statement* statement = calloc(1, sizeof(ast_statement));
-  if (!statement) {
-    error("FATAL: create_statement(): calloc() failed");
-  }
+  ast_statement* statement = calloc_safe(/*nelem=*/1, sizeof(ast_statement));
   node->node.statement = statement;
   return node;
 }

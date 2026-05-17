@@ -5,10 +5,7 @@
 #include "errors.h"
 
 list* list_init(void) {
-  list* lst = malloc(sizeof(list));
-  if (!lst) {
-    error("FATAL: list_init(): malloc() failed");
-  }
+  list* lst = malloc_safe(sizeof(list));
   lst->size = 0;
   lst->head = NULL;
   lst->tail = NULL;
@@ -16,11 +13,7 @@ list* list_init(void) {
 }
 
 list_node* list_push_front(list* lst, void* data) {
-  list_node* new_node = malloc(sizeof(list_node));
-  if (!new_node) {
-    error("FATAL: list_insert(): malloc() failed");
-  }
-
+  list_node* new_node = malloc_safe(sizeof(list_node));
   new_node->data = data;
   new_node->next = lst->head;
   lst->head = new_node;
@@ -32,11 +25,7 @@ list_node* list_push_front(list* lst, void* data) {
 }
 
 list_node* list_push_back(list* lst, void* data) {
-  list_node* new_node = malloc(sizeof(list_node));
-  if (!new_node) {
-    error("FATAL: list_insert(): malloc() failed");
-  }
-
+  list_node* new_node = malloc_safe(sizeof(list_node));
   new_node->data = data;
   new_node->next = NULL;
   if (lst->size == 0) {
@@ -50,11 +39,7 @@ list_node* list_push_back(list* lst, void* data) {
 }
 
 list_node* list_insert(list* lst, list_node* node, void* data) {
-  list_node* new_node = malloc(sizeof(list_node));
-  if (!new_node) {
-    error("FATAL: list_insert(): malloc() failed");
-  }
-
+  list_node* new_node = malloc_safe(sizeof(list_node));
   new_node->data = data;
   new_node->next = node->next;
   node->next = new_node;

@@ -27,16 +27,10 @@ typedef enum compiler_option {
 //! with the path to the output file after execution finishes.
 static int run_preprocessor(char* path) {
   char* path_copy = strdup(path);
-  if (!path_copy) {
-    error("run_preprocessor(): failed to dup path.");
-  }
   replace_ext(&path, "i");
 
   // command: cpp -P path_copy -o out_path
   char* command = string_concat(4, "cpp -P ", path_copy, " -o ", path);
-  if (!command) {
-    error("run_preprocessor(): failed to allocate command.");
-  }
   int res = system(command);
   free(command);
   free(path_copy);
@@ -47,9 +41,6 @@ static int run_preprocessor(char* path) {
 static int rm_file(const char* path) {
   // command: rm path
   char* command = string_concat(2, "rm ", path);
-  if (!command) {
-    error("rm_file(): failed to allocate command.");
-  }
   int res = system(command);
   free(command);
   return res;
@@ -88,9 +79,6 @@ int main(int argc, char* argv[]) {
          opt == CO_DEFAULT ? "<none>" : opts[opt_index].name);
 
   char* path = strdup(argv[optind]);
-  if (!path) {
-    error("main(): failed to dup path");
-  }
   strcpy(path, argv[optind]);
   printf("Got input file path: %s\n", path);
 

@@ -62,3 +62,11 @@ void* calloc_safe(size_t nelem, size_t elsize) {
   }
   return ptr;
 }
+
+void* realloc_safe(void* ptr, size_t size) {
+  void* p = realloc(ptr, size);
+  if (!p) {
+    error("FATAL: realloc() failed.");
+  }
+  return p;
+}

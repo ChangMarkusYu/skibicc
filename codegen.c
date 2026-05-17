@@ -65,10 +65,7 @@ static inline bool stack_allocator_has_offset(stack_allocator* alloc) {
 
 static asm_operad* stack_allocator_get(stack_allocator* alloc, ir_val* val,
                                        int64_t offset) {
-  asm_operad* opnd = calloc(/*__nmemb=*/1, sizeof(asm_operad));
-  if (!opnd) {
-    error("FATAL: stack_allocator_get(): calloc() failed.");
-  }
+  asm_operad* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operad));
   opnd->operand_type = ASM_OPND_STACK;
   // TODO: strlen is expensive here. Should be precomputed by `var_name`.
   size_t name_len = strlen(val->val.var_name);
@@ -85,10 +82,7 @@ static asm_operad* stack_allocator_get(stack_allocator* alloc, ir_val* val,
   new_entry.key = (char*)val->val.var_name;
   new_entry.key_size = name_len;
   // TODO: put this malloc/calloc + check into a dedicated function.
-  int64_t* data = malloc(sizeof(int64_t));
-  if (!data) {
-    error("FATAL: stack_allocator_get(): malloc() failed.");
-  }
+  int64_t* data = malloc_safe(sizeof(int64_t));
   *data = alloc->offset;
   new_entry.data = data;
   new_entry.data_size = sizeof(int64_t);
@@ -106,10 +100,7 @@ static void insert_allocate_stack_instruction(stack_allocator* alloc,
     return;
   }
 
-  asm_instruction* inst = calloc(/*__nmemb=*/1, sizeof(asm_instruction));
-  if (!inst) {
-    error("FATAL: insert_allocate_stack_instruction(): calloc() failed");
-  }
+  asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
   inst->instruction_type = ASM_ALLOCSTACK;
   inst->lhs->operand_type = ASM_OPND_IMM;
   inst->lhs->operand.immediate = alloc->offset;
@@ -117,10 +108,7 @@ static void insert_allocate_stack_instruction(stack_allocator* alloc,
 }
 
 static asm_func_def* lower_asm_func_def(ir_func_def* ir_func_def) {
-  asm_func_def* func_def = calloc(1, sizeof(asm_func_def));
-  if (!func_def) {
-    error("FATAL: create_asm_func_def(): calloc() failed");
-  }
+  asm_func_def* func_def = calloc_safe(/*nelem=*/1, sizeof(asm_func_def));
   func_def->name = ir_func_def->name;
 
   list* instructions = list_init();

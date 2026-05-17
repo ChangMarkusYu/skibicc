@@ -24,10 +24,7 @@ char* string_concat(int n, ...) {
   }
   va_end(args);
 
-  char* cur = malloc(len + 1);
-  if (!cur) {
-    error("FATAL: string_concat(): malloc() failed.");
-  }
+  char* cur = malloc_safe(len + 1);
   char* res = cur;
   va_start(args, n);
   for (int i = 0; i < n; ++i) {
@@ -43,11 +40,7 @@ char* string_concat(int n, ...) {
 void replace_ext(char** path, const char* ext) {
   size_t len = strlen(*path);
   // allocate some extra in case we need to add a dot ('.')
-  char* s = realloc(*path, len + strlen(ext) + 2);
-  if (!s) {
-    error("FATAL: replace_ext(): realloc() failed.");
-  }
-
+  char* s = realloc_safe(*path, len + strlen(ext) + 2);
   // get the filename
   char* cur = strrchr(s, '/');
   if (!cur) {

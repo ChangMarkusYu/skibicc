@@ -23,4 +23,8 @@ void* malloc_safe(size_t size);
 //! with an error message.
 void* calloc_safe(size_t nelem, size_t elsize);
 
+//! Delegates to `realloc`, but if `calloc` returns `NULL`, exits the program
+//! with an error message.
+void* realloc_safe(void* ptr, size_t size);
+
 #endif  // SKIBICC_ERRORS_H
