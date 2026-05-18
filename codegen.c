@@ -21,7 +21,7 @@ typedef struct asm_operand {
     const char* reg;
     int64_t offset;
   } operand;
-} asm_operad;
+} asm_operand;
 
 typedef enum asm_instruction_type {
   ASM_MOV,
@@ -33,9 +33,9 @@ typedef enum asm_instruction_type {
 
 typedef struct asm_instruction {
   asm_instruction_type instruction_type;
-  asm_operad* lhs;
-  asm_operad* rhs;
-  asm_operad* dst;
+  asm_operand* lhs;
+  asm_operand* rhs;
+  asm_operand* dst;
 } asm_instruction;
 
 typedef struct asm_func_def {
@@ -63,9 +63,9 @@ static inline bool stack_allocator_has_offset(stack_allocator* alloc) {
   return alloc->offset < 0;
 }
 
-static asm_operad* stack_allocator_get(stack_allocator* alloc, ir_val* val,
-                                       int64_t offset) {
-  asm_operad* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operad));
+static asm_operand* stack_allocator_get(stack_allocator* alloc, ir_val* val,
+                                        int64_t offset) {
+  asm_operand* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
   opnd->operand_type = ASM_OPND_STACK;
   // TODO: strlen is expensive here. Should be precomputed by `var_name`.
   size_t name_len = strlen(val->val.var_name);
@@ -81,7 +81,6 @@ static asm_operad* stack_allocator_get(stack_allocator* alloc, ir_val* val,
   hashmap_entry new_entry;
   new_entry.key = (char*)val->val.var_name;
   new_entry.key_size = name_len;
-  // TODO: put this malloc/calloc + check into a dedicated function.
   int64_t* data = malloc_safe(sizeof(int64_t));
   *data = alloc->offset;
   new_entry.data = data;
