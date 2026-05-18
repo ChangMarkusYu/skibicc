@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,17 +107,31 @@ static void insert_allocate_stack_instruction(stack_allocator* alloc,
   list_push_front(instructions, inst);
 }
 
-static asm_func_def* lower_asm_func_def(ir_func_def* ir_func_def) {
+static void lower_ir_instruction(ir_instruction* ir_instruction,
+                                 list* asm_instructions) {
+  if (ir_instruction->instruction_type == IR_RETURN) {
+    // mov(val, reg(ax))
+    asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
+    inst->instruction_type = ASM_MOV;
+    inst->lhs = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+  }
+}
+
+static asm_func_def* lower_ir_func_def(ir_func_def* ir_func_def) {
   asm_func_def* func_def = calloc_safe(/*nelem=*/1, sizeof(asm_func_def));
   func_def->name = ir_func_def->name;
-
-  list* instructions = list_init();
-  func_def->instructions = instructions;
+  func_def->instructions = list_init();
+  list* instructions = func_def->instructions;
 
   stack_allocator alloc;
   stack_allocator_init(&alloc);
-  // TODO: translate IR vars into stack access instruction.
-  insert_allocate_stack_instruction(&alloc, func_def->instructions);
+
+  for (size_t i = 0; i < instructions->size; ++i) {
+    ir_instruction* ir_inst = array_at(ir_func_def->instructions, i);
+    lower_ir_instruction(ir_inst, instructions);
+  }
+
+  insert_allocate_stack_instruction(&alloc, instructions);
   stack_allocator_destroy(&alloc);
   return func_def;
 }
