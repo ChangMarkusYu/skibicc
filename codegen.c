@@ -9,6 +9,21 @@
 #include "ir.h"
 #include "list.h"
 
+typedef enum asm_register {
+  EAX,
+  R10D,
+} asm_register;
+
+const char* asm_register_to_string(asm_register reg) {
+  switch (reg) {
+    case EAX:
+      return "eax";
+    case R10D:
+      return "r10d";
+  }
+  error("Unimplemented");
+}
+
 typedef enum asm_operand_type {
   ASM_OPND_IMM,
   ASM_OPND_REG,
@@ -19,7 +34,7 @@ typedef struct asm_operand {
   asm_operand_type operand_type;
   union {
     int64_t immediate;
-    const char* reg;
+    asm_register reg;
     int64_t offset;
   } operand;
 } asm_operand;
@@ -32,10 +47,25 @@ typedef enum asm_instruction_type {
   ASM_RETURN,
 } asm_instruction_type;
 
+const char* asm_instruction_type_to_string(asm_instruction_type inst_type) {
+  switch (inst_type) {
+    case ASM_MOV:
+      return "movl";
+    case ASM_NEG:
+      return "negl";
+    case ASM_NOT:
+      return "notl";
+    case ASM_ALLOCSTACK:
+      return "subq";
+    case ASM_RETURN:
+      return "ret";
+  }
+  error("Unimplemented");
+}
+
 typedef struct asm_instruction {
   asm_instruction_type instruction_type;
-  asm_operand* lhs;
-  asm_operand* rhs;
+  asm_operand* src;
   asm_operand* dst;
 } asm_instruction;
 
@@ -102,18 +132,72 @@ static void insert_allocate_stack_instruction(stack_allocator* alloc,
 
   asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
   inst->instruction_type = ASM_ALLOCSTACK;
-  inst->lhs->operand_type = ASM_OPND_IMM;
-  inst->lhs->operand.immediate = alloc->offset;
+  inst->src->operand_type = ASM_OPND_IMM;
+  inst->src->operand.immediate = alloc->offset;
   list_push_front(instructions, inst);
 }
 
+static asm_operand* create_register(asm_register reg) {
+  asm_operand* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+  opnd->operand_type = ASM_OPND_REG;
+  opnd->operand.reg = reg;
+  return opnd;
+}
+
+static void insert_mov(asm_operand* src, asm_operand* dst,
+                       list* asm_instructions) {
+  asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
+  inst->instruction_type = ASM_MOV;
+  inst->src = src;
+  if (src->operand_type == ASM_OPND_STACK &&
+      dst->operand_type == ASM_OPND_STACK) {
+    // Both are stack addreses. Not allowed.
+    // Need to rewrite from:
+    // mov <stack1>, <stack2>
+    // to:
+    // mov <stack1>, %r10d
+    // mov %r10d, <stack2>
+    inst->dst = create_register(R10D);
+    list_push_back(asm_instructions, inst);
+
+    // %r10d should be the src of the next mov:
+    // mov %r10d, <stack2>
+    inst->src = create_register(R10D);
+  }
+  inst->dst = dst;
+}
+
+static void insert_ret(list* asm_instructions) {
+  asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
+  inst->instruction_type = ASM_RETURN;
+  list_push_back(asm_instructions, inst);
+}
+
+static void lower_ir_return(ir_instruction* ir_instruction,
+                            stack_allocator* alloc, list* asm_instructions) {
+  // mov(val, reg(ax))
+  ir_val* ir_lhs = ir_instruction->lhs;
+  asm_operand* src = NULL;
+  if (!ir_lhs->is_constant) {
+    src = stack_allocator_get(alloc, ir_lhs, /*offset=*/-4);
+  } else {
+    src = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+    // TODO: this is extremely dumb and probably wrong. Fix it.
+    src->operand.immediate =
+        ir_lhs->val.constant->node.consant->tok->constant.int_val;
+  }
+  asm_operand* dst = create_register(EAX);
+  insert_mov(src, dst, asm_instructions);
+
+  // ret
+  insert_ret(asm_instructions);
+}
+
 static void lower_ir_instruction(ir_instruction* ir_instruction,
+                                 stack_allocator* alloc,
                                  list* asm_instructions) {
   if (ir_instruction->instruction_type == IR_RETURN) {
-    // mov(val, reg(ax))
-    asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
-    inst->instruction_type = ASM_MOV;
-    inst->lhs = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+    lower_ir_return(ir_instruction, alloc, asm_instructions);
   }
 }
 
@@ -128,7 +212,7 @@ static asm_func_def* lower_ir_func_def(ir_func_def* ir_func_def) {
 
   for (size_t i = 0; i < instructions->size; ++i) {
     ir_instruction* ir_inst = array_at(ir_func_def->instructions, i);
-    lower_ir_instruction(ir_inst, instructions);
+    lower_ir_instruction(ir_inst, &alloc, instructions);
   }
 
   insert_allocate_stack_instruction(&alloc, instructions);
@@ -136,4 +220,8 @@ static asm_func_def* lower_ir_func_def(ir_func_def* ir_func_def) {
   return func_def;
 }
 
-asm_node* lower_ir(ir_node* ir) { return NULL; }
+asm_node* lower_ir(ir_node* ir) {
+  asm_node* node = calloc_safe(/*nelem=*/1, sizeof(asm_node));
+  node->func_def = lower_ir_func_def(ir->function_definition);
+  return node;
+}
