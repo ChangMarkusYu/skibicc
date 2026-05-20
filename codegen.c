@@ -1,3 +1,5 @@
+#include "codegen.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,11 +11,6 @@
 #include "ir.h"
 #include "list.h"
 
-typedef enum asm_register {
-  EAX,
-  R10D,
-} asm_register;
-
 const char* asm_register_to_string(asm_register reg) {
   switch (reg) {
     case EAX:
@@ -23,29 +20,6 @@ const char* asm_register_to_string(asm_register reg) {
   }
   error("Unimplemented");
 }
-
-typedef enum asm_operand_type {
-  ASM_OPND_IMM,
-  ASM_OPND_REG,
-  ASM_OPND_STACK,
-} asm_operand_type;
-
-typedef struct asm_operand {
-  asm_operand_type operand_type;
-  union {
-    int64_t immediate;
-    asm_register reg;
-    int64_t offset;
-  } operand;
-} asm_operand;
-
-typedef enum asm_instruction_type {
-  ASM_MOV,
-  ASM_NEG,
-  ASM_NOT,
-  ASM_ALLOCSTACK,
-  ASM_RETURN,
-} asm_instruction_type;
 
 const char* asm_instruction_type_to_string(asm_instruction_type inst_type) {
   switch (inst_type) {
@@ -62,28 +36,6 @@ const char* asm_instruction_type_to_string(asm_instruction_type inst_type) {
   }
   error("Unimplemented");
 }
-
-typedef struct asm_instruction {
-  asm_instruction_type instruction_type;
-  asm_operand* src;
-  asm_operand* dst;
-} asm_instruction;
-
-typedef struct asm_func_def {
-  const char* name;
-  list* instructions;
-} asm_func_def;
-
-struct asm_node;
-typedef struct asm_node {
-  asm_func_def* func_def;
-  struct asm_node* next;
-} asm_node;
-
-typedef struct stack_allocator {
-  hashmap var_to_offset;
-  int64_t offset;
-} stack_allocator;
 
 static void stack_allocator_init(stack_allocator* alloc) {
   hashmap_init(&alloc->var_to_offset);
