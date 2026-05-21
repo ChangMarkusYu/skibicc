@@ -21,7 +21,8 @@ const char* asm_register_to_string(asm_register reg) {
     case R10D:
       return "r10d";
   }
-  error("Unimplemented");
+  error("Unimplemented reg");
+  return NULL;
 }
 
 const char* asm_instruction_type_to_string(asm_instruction_type inst_type) {
@@ -37,7 +38,8 @@ const char* asm_instruction_type_to_string(asm_instruction_type inst_type) {
     case ASM_RETURN:
       return "ret";
   }
-  error("Unimplemented");
+  error("Unimplemented asm inst");
+  return NULL;
 }
 
 static void stack_allocator_init(stack_allocator* alloc) {
@@ -79,6 +81,20 @@ static void stack_allocator_destroy(stack_allocator* alloc) {
   hashmap_destroy(&alloc->var_to_offset);
 }
 
+static asm_operand* create_register(asm_register reg) {
+  asm_operand* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+  opnd->operand_type = ASM_OPND_REG;
+  opnd->operand.reg = reg;
+  return opnd;
+}
+
+static asm_operand* create_immediate(int64_t immediate) {
+  asm_operand* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+  opnd->operand_type = ASM_OPND_IMM;
+  opnd->operand.immediate = immediate;
+  return opnd;
+}
+
 static void insert_allocate_stack_instruction(stack_allocator* alloc,
                                               list* instructions) {
   if (!stack_allocator_has_offset(alloc)) {
@@ -87,16 +103,10 @@ static void insert_allocate_stack_instruction(stack_allocator* alloc,
 
   asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
   inst->instruction_type = ASM_ALLOCSTACK;
-  inst->src->operand_type = ASM_OPND_IMM;
-  inst->src->operand.immediate = alloc->offset;
+  // x86 allocates stack using sub command, so we need to flip negative offset
+  // to positive.
+  inst->src = create_immediate(-alloc->offset);
   list_push_front(instructions, inst);
-}
-
-static asm_operand* create_register(asm_register reg) {
-  asm_operand* opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
-  opnd->operand_type = ASM_OPND_REG;
-  opnd->operand.reg = reg;
-  return opnd;
 }
 
 static void insert_mov(asm_operand* src, asm_operand* dst,
@@ -120,6 +130,7 @@ static void insert_mov(asm_operand* src, asm_operand* dst,
     inst->src = create_register(R10D);
   }
   inst->dst = dst;
+  list_push_back(asm_instructions, inst);
 }
 
 static void insert_ret(list* asm_instructions) {
@@ -146,12 +157,11 @@ static asm_operand* lower_ir_val(ir_val* ir_val, stack_allocator* alloc) {
   asm_operand* opnd = NULL;
   if (!ir_val->is_constant) {
     // TODO: Type checking required for the stack offset.
-    opnd = stack_allocator_get(alloc, ir_val, /*offset=*/-4);
+    opnd = stack_allocator_get(alloc, ir_val, /*offset=*/4);
   } else {
-    opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
     // TODO: this is extremely dumb and probably wrong. Fix it.
-    opnd->operand.immediate =
-        ir_val->val.constant->node.consant->tok->constant.int_val;
+    opnd = create_immediate(
+        ir_val->val.constant->node.consant->tok->constant.int_val);
   }
   return opnd;
 }
@@ -169,7 +179,7 @@ static void lower_ir_return(ir_instruction* ir_instruction,
 
 static void lower_ir_unary(ir_instruction* ir_instruction,
                            stack_allocator* alloc, list* asm_instructions) {
-  // move(src, dst)
+  // mov(src, dst)
   asm_operand* src = lower_ir_val(ir_instruction->lhs, alloc);
   asm_operand* dst = lower_ir_val(ir_instruction->dst, alloc);
   insert_mov(src, dst, asm_instructions);
@@ -182,38 +192,40 @@ static void lower_ir_unary(ir_instruction* ir_instruction,
       insert_not(dst, asm_instructions);
       break;
     default:
-      error("Unimplemented");
+      error("Unimplemented unary");
   }
 }
 
 static void lower_ir_instruction(ir_instruction* ir_instruction,
                                  stack_allocator* alloc,
                                  list* asm_instructions) {
-  if (ir_instruction->instruction_type == IR_RETURN) {
-    lower_ir_return(ir_instruction, alloc, asm_instructions);
+  switch (ir_instruction->instruction_type) {
+    case IR_RETURN:
+      lower_ir_return(ir_instruction, alloc, asm_instructions);
+      break;
+    case IR_ARITH:
+      // TODO: just unary for now. Add more in the future.
+      lower_ir_unary(ir_instruction, alloc, asm_instructions);
+      break;
+    default:
+      error("Unimplemented ir inst");
   }
-  if (ir_instruction->instruction_type == IR_ARITH) {
-    // TODO: just unary for now. Add more in the future.
-    lower_ir_unary(ir_instruction, alloc, asm_instructions);
-  }
-  error("Unimplemented");
 }
 
 static asm_func_def* lower_ir_func_def(ir_func_def* ir_func_def) {
   asm_func_def* func_def = calloc_safe(/*nelem=*/1, sizeof(asm_func_def));
   func_def->name = ir_func_def->name;
   func_def->instructions = list_init();
-  list* instructions = func_def->instructions;
 
   stack_allocator alloc;
   stack_allocator_init(&alloc);
 
-  for (size_t i = 0; i < instructions->size; ++i) {
+  for (size_t i = 0; i < ir_func_def->instructions->size; ++i) {
     ir_instruction* ir_inst = array_at(ir_func_def->instructions, i);
-    lower_ir_instruction(ir_inst, &alloc, instructions);
+    lower_ir_instruction(ir_inst, &alloc, func_def->instructions);
   }
 
-  insert_allocate_stack_instruction(&alloc, instructions);
+  insert_allocate_stack_instruction(&alloc, func_def->instructions);
   stack_allocator_destroy(&alloc);
   return func_def;
 }
@@ -224,71 +236,73 @@ asm_node* lower_ir(ir_node* ir) {
   return node;
 }
 
-void println(char* fmt, ...) {
+void println(FILE* f, char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  printf(fmt, args);
+  vfprintf(f, fmt, args);
   va_end(args);
-  printf("\n");
+  fprintf(f, "\n");
 }
 
-static void emit_asm_operand(asm_operand* asm_operand) {
+static void emit_asm_operand(FILE* f, asm_operand* asm_operand) {
   switch (asm_operand->operand_type) {
     case ASM_OPND_IMM:
-      printf("%" PRId64, asm_operand->operand.immediate);
+      fprintf(f, "$%" PRId64, asm_operand->operand.immediate);
       break;
     case ASM_OPND_STACK:
-      printf("%" PRId64 "(%%rbp)", asm_operand->operand.offset);
+      fprintf(f, "%" PRId64 "(%%rbp)", asm_operand->operand.offset);
       break;
     case ASM_OPND_REG:
-      printf("%s", asm_register_to_string(asm_operand->operand.reg));
+      fprintf(f, "%%%s", asm_register_to_string(asm_operand->operand.reg));
       break;
   }
 }
 
-static void emit_asm_instruction(asm_instruction* asm_instruction) {
+static void emit_asm_instruction(FILE* f, asm_instruction* asm_instruction) {
   switch (asm_instruction->instruction_type) {
     case ASM_MOV:
-      printf("mov ");
-      emit_asm_operand(asm_instruction->src);
-      printf(", ");
-      emit_asm_operand(asm_instruction->dst);
-      printf("\n");
+      fprintf(f, "movl ");
+      emit_asm_operand(f, asm_instruction->src);
+      fprintf(f, ", ");
+      emit_asm_operand(f, asm_instruction->dst);
+      fprintf(f, "\n");
       break;
     case ASM_RETURN:
-      println("movq %%rbp, %%rsp");
-      println("popq %%rbp");
-      println("ret");
+      println(f, "movq %%rbp, %%rsp");
+      println(f, "popq %%rbp");
+      println(f, "ret");
       break;
     case ASM_ALLOCSTACK:
-      printf("subq $");
-      emit_asm_operand(asm_instruction->src);
-      printf(", %%rsp\n");
+      fprintf(f, "subq ");
+      emit_asm_operand(f, asm_instruction->src);
+      fprintf(f, ", %%rsp\n");
       break;
     case ASM_NEG:
-      printf("negl ");
-      emit_asm_operand(asm_instruction->src);
-      printf("\n");
+      fprintf(f, "negl ");
+      emit_asm_operand(f, asm_instruction->dst);
+      fprintf(f, "\n");
       break;
     case ASM_NOT:
-      printf("notl ");
-      emit_asm_operand(asm_instruction->src);
-      printf("\n");
+      fprintf(f, "notl ");
+      emit_asm_operand(f, asm_instruction->dst);
+      fprintf(f, "\n");
       break;
   }
 }
 
-static void emit_asm_func_def(asm_func_def* asm_func_def) {
-  println(".globl %s", asm_func_def->name);
-  println("pushq %%rbp");
-  println("movq %%rsp, %%rbp");
+static void emit_asm_func_def(FILE* f, asm_func_def* asm_func_def) {
+  println(f, ".globl %s", asm_func_def->name);
+  println(f, "%s:", asm_func_def->name);
+  println(f, "pushq %%rbp");
+  println(f, "movq %%rsp, %%rbp");
   for (list_node* inst = asm_func_def->instructions->head; inst != NULL;
        inst = inst->next) {
-    emit_asm_instruction(inst->data);
+    emit_asm_instruction(f, inst->data);
   }
 }
 
-void emit(asm_node* asm_node) {
-  emit_asm_func_def(asm_node->func_def);
-  println(".section .note.GNU-stack,\"\",@progbits");
+void emit(FILE* f, ir_node* ir) {
+  asm_node* node = lower_ir(ir);
+  emit_asm_func_def(f, node->func_def);
+  println(f, ".section .note.GNU-stack,\"\",@progbits");
 }

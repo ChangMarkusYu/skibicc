@@ -2,8 +2,10 @@
 #define SKIBICC_CODEGEN_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "hashmap.h"
+#include "ir.h"
 #include "list.h"
 
 typedef enum asm_register {
@@ -56,5 +58,7 @@ typedef struct stack_allocator {
   hashmap var_to_offset;
   int64_t offset;
 } stack_allocator;
+
+void emit(FILE* f, ir_node* ir);
 
 #endif  // SKIBICC_CODEGEN_H
