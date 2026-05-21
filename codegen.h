@@ -20,6 +20,7 @@ typedef enum asm_operand_type {
 typedef struct asm_operand {
   asm_operand_type operand_type;
   union {
+    // TODO: immediate might be uint64_t.
     int64_t immediate;
     asm_register reg;
     int64_t offset;

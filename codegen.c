@@ -1,7 +1,10 @@
 #include "codegen.h"
 
+#include <inttypes.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -219,4 +222,73 @@ asm_node* lower_ir(ir_node* ir) {
   asm_node* node = calloc_safe(/*nelem=*/1, sizeof(asm_node));
   node->func_def = lower_ir_func_def(ir->function_definition);
   return node;
+}
+
+void println(char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  printf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
+
+static void emit_asm_operand(asm_operand* asm_operand) {
+  switch (asm_operand->operand_type) {
+    case ASM_OPND_IMM:
+      printf("%" PRId64, asm_operand->operand.immediate);
+      break;
+    case ASM_OPND_STACK:
+      printf("%" PRId64 "(%%rbp)", asm_operand->operand.offset);
+      break;
+    case ASM_OPND_REG:
+      printf("%s", asm_register_to_string(asm_operand->operand.reg));
+      break;
+  }
+}
+
+static void emit_asm_instruction(asm_instruction* asm_instruction) {
+  switch (asm_instruction->instruction_type) {
+    case ASM_MOV:
+      printf("mov ");
+      emit_asm_operand(asm_instruction->src);
+      printf(", ");
+      emit_asm_operand(asm_instruction->dst);
+      printf("\n");
+      break;
+    case ASM_RETURN:
+      println("movq %%rbp, %%rsp");
+      println("popq %%rbp");
+      println("ret");
+      break;
+    case ASM_ALLOCSTACK:
+      printf("subq $");
+      emit_asm_operand(asm_instruction->src);
+      printf(", %%rsp\n");
+      break;
+    case ASM_NEG:
+      printf("negl ");
+      emit_asm_operand(asm_instruction->src);
+      printf("\n");
+      break;
+    case ASM_NOT:
+      printf("notl ");
+      emit_asm_operand(asm_instruction->src);
+      printf("\n");
+      break;
+  }
+}
+
+static void emit_asm_func_def(asm_func_def* asm_func_def) {
+  println(".globl %s", asm_func_def->name);
+  println("pushq %%rbp");
+  println("movq %%rsp, %%rbp");
+  for (list_node* inst = asm_func_def->instructions->head; inst != NULL;
+       inst = inst->next) {
+    emit_asm_instruction(inst->data);
+  }
+}
+
+void emit(asm_node* asm_node) {
+  emit_asm_func_def(asm_node->func_def);
+  println(".section .note.GNU-stack,\"\",@progbits");
 }
