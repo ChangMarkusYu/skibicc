@@ -81,12 +81,10 @@ static ir_node* create_ir_node(void) {
   return node;
 }
 
-const char* MAIN = "main";
-
 ir_node* emit_ir(ast_node* ast) {
   ir_node* ir = create_ir_node();
   // TODO: hard coded for now. Implement later.
-  ir->function_definition->name = MAIN;
+  ir->function_definition->name = "main";
   emit_ir_instruction(ast, ir->function_definition->instructions);
   return ir;
 }
