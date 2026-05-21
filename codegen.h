@@ -56,4 +56,4 @@ typedef struct stack_allocator {
   int64_t offset;
 } stack_allocator;
 
-#endif
+#endif  // SKIBICC_CODEGEN_H

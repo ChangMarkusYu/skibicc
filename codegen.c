@@ -125,24 +125,62 @@ static void insert_ret(list* asm_instructions) {
   list_push_back(asm_instructions, inst);
 }
 
+static void insert_neg(asm_operand* dst, list* asm_instructions) {
+  asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
+  inst->instruction_type = ASM_NEG;
+  inst->dst = dst;
+  list_push_back(asm_instructions, inst);
+}
+
+static void insert_not(asm_operand* dst, list* asm_instructions) {
+  asm_instruction* inst = calloc_safe(/*nelem=*/1, sizeof(asm_instruction));
+  inst->instruction_type = ASM_NOT;
+  inst->dst = dst;
+  list_push_back(asm_instructions, inst);
+}
+
+static asm_operand* lower_ir_val(ir_val* ir_val, stack_allocator* alloc) {
+  asm_operand* opnd = NULL;
+  if (!ir_val->is_constant) {
+    // TODO: Type checking required for the stack offset.
+    opnd = stack_allocator_get(alloc, ir_val, /*offset=*/-4);
+  } else {
+    opnd = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
+    // TODO: this is extremely dumb and probably wrong. Fix it.
+    opnd->operand.immediate =
+        ir_val->val.constant->node.consant->tok->constant.int_val;
+  }
+  return opnd;
+}
+
 static void lower_ir_return(ir_instruction* ir_instruction,
                             stack_allocator* alloc, list* asm_instructions) {
   // mov(val, reg(ax))
-  ir_val* ir_lhs = ir_instruction->lhs;
-  asm_operand* src = NULL;
-  if (!ir_lhs->is_constant) {
-    src = stack_allocator_get(alloc, ir_lhs, /*offset=*/-4);
-  } else {
-    src = calloc_safe(/*nelem=*/1, sizeof(asm_operand));
-    // TODO: this is extremely dumb and probably wrong. Fix it.
-    src->operand.immediate =
-        ir_lhs->val.constant->node.consant->tok->constant.int_val;
-  }
+  asm_operand* src = lower_ir_val(ir_instruction->lhs, alloc);
   asm_operand* dst = create_register(EAX);
   insert_mov(src, dst, asm_instructions);
 
   // ret
   insert_ret(asm_instructions);
+}
+
+static void lower_ir_unary(ir_instruction* ir_instruction,
+                           stack_allocator* alloc, list* asm_instructions) {
+  // move(src, dst)
+  asm_operand* src = lower_ir_val(ir_instruction->lhs, alloc);
+  asm_operand* dst = lower_ir_val(ir_instruction->dst, alloc);
+  insert_mov(src, dst, asm_instructions);
+
+  switch (ir_instruction->op->op_type) {
+    case OP_NEG:
+      insert_neg(dst, asm_instructions);
+      break;
+    case OP_BITNOT:
+      insert_not(dst, asm_instructions);
+      break;
+    default:
+      error("Unimplemented");
+  }
 }
 
 static void lower_ir_instruction(ir_instruction* ir_instruction,
@@ -151,6 +189,11 @@ static void lower_ir_instruction(ir_instruction* ir_instruction,
   if (ir_instruction->instruction_type == IR_RETURN) {
     lower_ir_return(ir_instruction, alloc, asm_instructions);
   }
+  if (ir_instruction->instruction_type == IR_ARITH) {
+    // TODO: just unary for now. Add more in the future.
+    lower_ir_unary(ir_instruction, alloc, asm_instructions);
+  }
+  error("Unimplemented");
 }
 
 static asm_func_def* lower_ir_func_def(ir_func_def* ir_func_def) {
